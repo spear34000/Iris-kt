@@ -1,0 +1,284 @@
+package iriskt.bot
+
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.websocket.Frame
+import io.ktor.websocket.readText
+import iriskt.bot.core.BatchScheduler
+import iriskt.bot.core.Config
+import iriskt.bot.core.IrisLink
+import iriskt.bot.core.LoggerManager
+import iriskt.bot.internal.EventEmitter
+import iriskt.bot.api.IrisApiClient
+import iriskt.bot.models.ChatContext
+import iriskt.bot.models.ErrorContext
+import iriskt.bot.models.Message
+import iriskt.bot.models.Room
+import iriskt.bot.models.User
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.longOrNull
+import java.io.Closeable
+import java.net.URI
+
+data class BotOptions(
+    val maxWorkers: Int = 4,
+    val httpMode: Boolean = false,
+    val port: Int? = null,
+    val webhookPath: String? = null,
+    val logLevel: LogLevel = LogLevel.INFO,
+    val bannedUsers: Set<Long> = emptySet(),
+    val kakaoLinkAppKey: String? = null,
+    val kakaoLinkOrigin: String? = null
+)
+
+enum class LogLevel {
+    DEBUG, INFO, WARN, ERROR
+}
+
+private val logger = LoggerManager.defaultLogger
+
+class Bot(
+    private val botName: String,
+    irisUrl: String,
+    options: BotOptions = BotOptions()
+) : Closeable {
+    private val config = Config
+    private val scheduler = BatchScheduler.getInstance()
+    private val irisLink = IrisLink(options.kakaoLinkAppKey, options.kakaoLinkOrigin)
+
+    private val emitter = EventEmitter(options.maxWorkers)
+    private val endpoint = irisUrl.removeSuffix("/")
+    private val websocketEndpoint = buildWebSocketEndpoint(endpoint)
+    private val apiClient = IrisApiClient(endpoint, defaultClient(), defaultJson())
+    private val reconnectDelayMillis = 3000L
+    private var closed = false
+
+    // 설정 옵션들
+    val options = options
+
+    init {
+        // 초기화 로그
+        logger.info("Bot 초기화: $botName")
+        logger.info("IRIS URL: $irisUrl")
+        logger.info("최대 워커 수: ${options.maxWorkers}")
+        if (options.bannedUsers.isNotEmpty()) {
+            logger.info("차단된 사용자 수: ${options.bannedUsers.size}")
+        }
+    }
+
+    suspend fun run() {
+        logger.info("Bot 시작: $botName")
+
+        // IrisLink 초기화 시도
+        try {
+            irisLink.init()
+            logger.info("IrisLink 초기화 성공")
+        } catch (e: Exception) {
+            logger.warn("IrisLink 초기화 실패: ${e.message}")
+        }
+
+        while (!closed) {
+            try {
+                defaultClient().webSocket(websocketEndpoint) {
+                    logger.info("웹소켓 연결 완료")
+                    for (frame in incoming) {
+                        when (frame) {
+                            is Frame.Text -> handleFrame(frame.readText())
+                            else -> Unit
+                        }
+                    }
+                }
+            } catch (ex: CancellationException) {
+                throw ex
+            } catch (ex: Exception) {
+                if (closed) return
+                logger.error("웹소켓 연결 오류", ex)
+                logger.info("${reconnectDelayMillis / 1000}초 후 재연결")
+                delay(reconnectDelayMillis)
+            }
+        }
+    }
+
+    fun onEvent(name: String, handler: suspend (Any) -> Unit) {
+        emitter.register(name, handler)
+    }
+
+    override fun close() {
+        logger.info("Bot 종료: $botName")
+        closed = true
+        emitter.close()
+        scheduler.clearAll()
+    }
+
+    fun api(): IrisApiClient = apiClient
+
+    fun getScheduler(): BatchScheduler = scheduler
+
+    fun getIrisLink(): IrisLink = irisLink
+
+    fun isBannedUser(userId: Long): Boolean {
+        return options.bannedUsers.contains(userId)
+    }
+
+    fun getConfig(): Config = config
+
+    private fun handleFrame(payload: String) {
+        val envelope = runCatching { Json.parseToJsonElement(payload).jsonObject }.getOrElse {
+            logger.error("웹소켓 메시지 파싱 오류", it)
+            return
+        }
+        val request = IrisRequest(
+            msg = envelope["msg"]?.jsonPrimitive?.contentOrNull,
+            room = envelope["room"]?.jsonPrimitive?.contentOrNull,
+            sender = envelope["sender"]?.jsonPrimitive?.contentOrNull,
+            raw = extractRaw(envelope)
+        )
+        processRequest(request)
+    }
+
+    private fun extractRaw(envelope: JsonObject): JsonObject {
+        val candidates = listOfNotNull(envelope["raw"], envelope["json"])
+        for (candidate in candidates) {
+            when (candidate) {
+                is JsonObject -> return candidate
+                is JsonArray -> {
+                    // JSON 배열은 객체로 변환 시도
+                    val jsonText = candidate.toString()
+                    val parsed = runCatching { Json.parseToJsonElement(jsonText) }.getOrNull()
+                    if (parsed is JsonObject) return parsed
+                    continue
+                }
+                is JsonPrimitive -> {
+                    val text = candidate.contentOrNull ?: continue
+                    val parsed = runCatching { Json.parseToJsonElement(text) }.getOrNull()
+                    if (parsed is JsonObject) return parsed
+                }
+            }
+        }
+        return JsonObject(emptyMap())
+    }
+
+    private fun processRequest(request: IrisRequest) {
+        val raw = request.raw
+        val roomId = raw.longField("chat_id") ?: raw.longField("room_id") ?: request.room?.toLongOrNull() ?: -1L
+        val roomName = request.room ?: raw["room"]?.jsonPrimitive?.contentOrNull ?: ""
+        val userId = raw.longField("user_id") ?: -1L
+        val userName = request.sender ?: raw["user"]?.jsonPrimitive?.contentOrNull ?: ""
+        val messageId = raw.longField("id") ?: -1L
+        val messageType = raw.intField("type") ?: 0
+        val messageText = raw["message"]?.jsonPrimitive?.contentOrNull ?: request.msg.orEmpty()
+        val attachment = raw["attachment"]?.jsonPrimitive?.contentOrNull
+        val metadata = parseMetadata(raw)
+
+        val context = ChatContext(
+            room = Room(id = roomId, name = roomName),
+            sender = User(id = userId, name = userName),
+            message = Message(
+                id = messageId,
+                type = messageType,
+                text = messageText,
+                attachment = attachment,
+                metadata = metadata
+            ),
+            raw = raw,
+            api = apiClient
+        )
+        emitter.emit("chat", context)
+        val origin = (metadata as? JsonObject)?.let { it["origin"]?.jsonPrimitive?.contentOrNull?.uppercase() }
+        when (origin) {
+            "MSG" -> emitter.emit("message", context)
+            "NEWMEM" -> emitter.emit("new_member", context)
+            "DELMEM" -> emitter.emit("del_member", context)
+        }
+    }
+
+    private fun parseMetadata(raw: JsonObject): JsonElement? {
+        val value = raw["v"] ?: return null
+        return when (value) {
+            is JsonObject, is JsonArray -> value
+            is JsonPrimitive -> {
+                val text = value.contentOrNull ?: return null
+                runCatching { Json.parseToJsonElement(text) }.getOrNull()
+            }
+            else -> null
+        }
+    }
+
+    private fun JsonObject.longField(vararg keys: String): Long? = keys.firstNotNullOfOrNull { key ->
+        val element = this[key] ?: return@firstNotNullOfOrNull null
+        when (element) {
+            is JsonPrimitive -> element.longOrNull ?: element.contentOrNull?.toLongOrNull()
+            else -> null
+        }
+    }
+
+    private fun JsonObject.intField(vararg keys: String): Int? = keys.firstNotNullOfOrNull { key ->
+        val element = this[key] ?: return@firstNotNullOfOrNull null
+        when (element) {
+            is JsonPrimitive -> element.intOrNull ?: element.contentOrNull?.toIntOrNull()
+            else -> null
+        }
+    }
+
+    companion object {
+        private fun defaultClient(): HttpClient = HttpClient(CIO) {
+            install(WebSockets)
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                    encodeDefaults = true
+                })
+            }
+        }
+
+        private fun defaultJson(): Json = Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            encodeDefaults = true
+        }
+
+        private fun buildWebSocketEndpoint(httpUrl: String): String {
+            val uri = URI(httpUrl)
+            val scheme = when (uri.scheme) {
+                "http" -> "ws"
+                "https" -> "wss"
+                else -> uri.scheme
+            }
+            return URI(
+                scheme,
+                uri.userInfo,
+                uri.host,
+                uri.port,
+                (uri.path.takeIf { it.isNotEmpty() } ?: "/") + if (uri.path.endsWith("/")) "ws" else "/ws",
+                uri.query,
+                uri.fragment
+            ).toString()
+        }
+    }
+}
+
+private data class IrisRequest(
+    val msg: String?,
+    val room: String?,
+    val sender: String?,
+    val raw: JsonObject
+)
