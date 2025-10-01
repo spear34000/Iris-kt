@@ -43,3 +43,9 @@ gradle-wrapper.properties
 *.temp
 .cache/
 out/
+
+
+# Additional ignores for this project
+bin/
+*.backup
+
