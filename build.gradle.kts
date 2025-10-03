@@ -32,3 +32,6 @@ tasks.jar {
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
+
+group = "com.spear.iriskt"
+version = "0.1.0"
