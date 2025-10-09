@@ -97,6 +97,8 @@ export IRIS_ENDPOINT="ws://your-iris-server-url"
 
 > ⚠️ **GitHub 저장소를 공개(Public)로 전환**해야 JitPack에서 빌드할 수 있습니다.
 
+> ✅ 이미 JitPack 연동을 완료했고 신규 사용자 안내가 불필요하다면 이 섹션은 건너뛰어도 됩니다.
+
 ### 1. JitPack 활성화
 
 - 저장소가 GitHub에 올라간 상태에서 [JitPack](https://jitpack.io)에 로그인 후 프로젝트를 검색합니다.
