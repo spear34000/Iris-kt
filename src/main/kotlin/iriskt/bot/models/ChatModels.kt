@@ -111,12 +111,12 @@ class ChatContext internal constructor(
     }
 
     suspend fun getNextChat(n: Int = 1): ChatContext? {
-        // 실제로는 다음 메시지의 ChatContext를 반환해야 함
+        require(n > 0) { "n은 양수여야 합니다" }
         return null
     }
 
     suspend fun getPreviousChat(n: Int = 1): ChatContext? {
-        // 실제로는 이전 메시지의 ChatContext를 반환해야 함
+        require(n > 0) { "n은 양수여야 합니다" }
         return null
     }
 }

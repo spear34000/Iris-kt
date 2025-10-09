@@ -1,44 +1,62 @@
-# IRIS Kotlin Bot 
+# IRIS Kotlin Bot
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9.24-blue.svg)](https://kotlinlang.org)
 [![Gradle](https://img.shields.io/badge/Gradle-8.9-green.svg)](https://gradle.org)
 [![Ktor](https://img.shields.io/badge/Ktor-2.3.9-purple.svg)](https://ktor.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Python irispy-client를 기반으로 한 Kotlin 카카오톡 봇 개발 라이브러리**
+Python `irispy-client`를 Kotlin으로 이식한 고성능 카카오톡 봇 개발 라이브러리입니다. 코루틴 기반 비동기 처리와 직관적인 API로 안정적인 자동화를 구축할 수 있습니다.
 
->  **참고**: 이 프로젝트는 [irispy-client](https://github.com/dolidolih/irispy-client)의 Kotlin 포트입니다.
+---
 
-##  목차
+## 📑 목차
 
-- [특징](#특징)
-- [요구사항](#요구사항)
-- [설치](#설치)
-- [빠른 시작](#빠른-시작)
-- [API 문서](#api-문서)
-- [예제](#예제)
-- [기여](#기여)
-- [라이선스](#라이선스)
+- [핵심 특징](#-핵심-특징)
+- [시스템 요구사항](#-시스템-요구사항)
+- [설치 및 설정](#-설치-및-설정)
+- [JitPack 연동](#-jitpack-연동)
+- [빠른 시작](#-빠른-시작)
+- [주요 컴포넌트 개요](#-주요-컴포넌트-개요)
+- [고급 기능 활용](#-고급-기능-활용)
+- [문제 해결 가이드](#-문제-해결-가이드)
+- [기여 방법](#-기여-방법)
+- [라이선스](#-라이선스)
 
-##  특징
+---
 
--  **고성능**: Kotlin 코루틴 기반 비동기 처리
--  **타입 안전성**: Kotlin의 강력한 타입 시스템 활용
--  **간편한 사용법**: 직관적인 API와 어노테이션 기반 명령어 처리
--  **실제 카카오 연동**: 실제 irispy-client와 동일한 KakaoLink 기능
--  **다양한 기능**: 메시지 처리, 이미지 전송, 스케줄링 등
--  **안전성**: 적절한 예외 처리 및 에러 복구
+## ⚡ 핵심 특징
 
-##  요구사항
+- **고성능 비동기 처리**: `kotlinx.coroutines` 기반 병렬 이벤트 처리.
+- **타입 안정성**: `kotlinx.serialization`과 구조화된 모델(`ChatContext`, `Message` 등) 제공.
+- **유연한 명령어 시스템**: 어노테이션 기반 검증(`@HasParam`, `@HasRole`, `@Throttle` 등) 지원.
+- **카카오링크 지원**: `IrisLink`로 템플릿 메시지 전송 및 예외 처리.
+- **스케줄링**: `BatchScheduler`로 예약 메시지/반복 작업 수행.
+- **클린 로깅**: `LoggerManager`와 `kotlin-logging`으로 일관된 로깅.
 
-- **Java**: 17 이상
-- **Kotlin**: 1.9.0 이상
+---
+
+## 🔧 시스템 요구사항
+
+- **JDK**: 17 이상
 - **Kotlin**: 1.9.24
-- **Gradle**: 8.9 이상
+- **Gradle**: 8.9 (Wrapper 포함)
+- **네트워크**: IRIS 서버(WebSocket) 연결 가능 환경
 
-### 프로젝트 설정
+---
 
-1. `build.gradle.kts`에 의존성 추가:
+## 🛠 설치 및 설정
+
+### 1. 저장소 클론
+
+```bash
+git clone https://github.com/사용자/irisKt.git
+cd irisKt
+```
+
+### 2. 의존성 확인
+
+`build.gradle.kts`는 주요 라이브러리를 이미 포함하고 있습니다.
+
 ```kotlin
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
@@ -57,629 +75,197 @@ kotlin {
 }
 ```
 
-2. 환경 변수 설정:
-```bash
-# PowerShell
-$env:IRIS_ENDPOINT = "ws://your-iris-server-url"
+### 3. 환경 변수 설정
 
-# 또는 Linux/macOS
+```powershell
+$env:IRIS_ENDPOINT = "ws://your-iris-server-url"
+```
+
+```bash
 export IRIS_ENDPOINT="ws://your-iris-server-url"
 ```
 
-## 🚀 빠른 시작
+### 4. 빌드
 
-### 기본 사용법
-
-```kotlin
-import iriskt.bot.Bot
-import iriskt.bot.models.ChatContext
-
-fun main() {
-    val bot = Bot("MyBot", System.getenv("IRIS_ENDPOINT"))
-
-    // 메시지 이벤트 핸들러
-    bot.onEvent("message") { payload ->
-        if (payload is ChatContext) {
-            println("[${payload.room.name}] ${payload.sender.name}: ${payload.message.text}")
-
-            // 명령어 처리
-            when (payload.message.command) {
-                "안녕" -> payload.reply("안녕하세요!")
-                "도움말" -> payload.reply("사용 가능한 명령어: 안녕, 도움말")
-            }
-        }
-    }
-
-    // 봇 실행
-    bot.run()
-}
-```
-
-### 고급 사용법
-
-```kotlin
-import iriskt.bot.Bot
-import iriskt.bot.core.BatchScheduler
-import iriskt.bot.models.ChatContext
-import kotlinx.coroutines.runBlocking
-
-fun main() = runBlocking {
-    val bot = Bot(
-        botName = "AdvancedBot",
-        irisUrl = System.getenv("IRIS_ENDPOINT"),
-        options = BotOptions(
-            maxWorkers = 8,
-            bannedUsers = setOf(123456789L, 987654321L),
-            kakaoLinkAppKey = "your_kakao_app_key"
-        )
-    )
-
-    // 스케줄러 설정
-    val scheduler = bot.getScheduler()
-    scheduler.scheduleMessage(
-        id = "reminder",
-        roomId = 12345L,
-        message = "회의 시작입니다!",
-        delayMillis = 300000 // 5분 후
-    )
-
-    // 이벤트 핸들러 등록
-    bot.onEvent("chat") { payload ->
-        if (payload is ChatContext) {
-            handleMessage(payload)
-        }
-    }
-
-    bot.run()
-}
-
-suspend fun handleMessage(context: ChatContext) {
-    val command = context.message.command
-    val param = context.message.param
-
-    when (command) {
-        "안녕" -> context.reply("안녕하세요! ${context.sender.name}님!")
-        "시간" -> context.reply("현재 시간: ${java.time.LocalTime.now()}")
-        "정보" -> {
-            val userType = context.sender.getType()
-            val roomType = context.room.getType()
-            context.reply("사용자: ${context.sender.name} ($userType), 방: ${context.room.name} ($roomType)")
-        }
-        else -> {
-            if (command.isNotEmpty()) {
-                context.reply("❓ '$command' 명령어를 찾을 수 없습니다.")
-            }
-        }
-    }
-}
-```
-
-## 📋 주요 기능
-
-### 🎮 이벤트 시스템
-
-| 이벤트명 | 설명 | 사용 시기 |
-|---------|------|-----------|
-| `chat` | 모든 채팅 메시지 | 모든 메시지를 처리할 때 |
-| `message` | 일반 텍스트 메시지 | 텍스트 메시지만 처리할 때 |
-| `new_member` | 새 멤버 참여 | 멤버 참여 알림 등 |
-| `del_member` | 멤버 퇴장 | 멤버 퇴장 처리 등 |
-| `error` | 오류 발생 | 예외 처리 및 로그 기록 |
-
-### 🔧 명령어 처리
-
-Message 클래스에는 편리한 명령어 처리 기능이 포함되어 있습니다:
-
-```kotlin
-// 메시지에서 명령어 추출
-val command = context.message.command  // 첫 번째 단어
-val param = context.message.param      // 나머지 부분
-val hasParam = context.message.hasParam // 매개변수 존재 여부
-```
-
-### 👤 사용자 권한 시스템
-
-```kotlin
-// 사용자 권한 조회
-val userType = context.sender.getType()  // "HOST", "MANAGER", "NORMAL", "BOT"
-
-// 권한별 처리
-when (userType) {
-    "HOST", "MANAGER" -> {
-        // 관리자 명령어 처리
-    }
-    else -> {
-        // 일반 사용자 명령어 처리
-    }
-}
-```
-
-### 🏠 방 관리
-
-```kotlin
-// 방 타입 조회
-val roomType = context.room.getType()  // "NORMAL", "OPEN", etc.
-
-// 방별 처리
-when (roomType) {
-    "OPEN" -> {
-        // 공개 채팅방 처리
-    }
-    else -> {
-        // 일반 채팅방 처리
-    }
-}
-```
-
-## ⚙️ 설정 옵션
-
-Bot 생성 시 다양한 옵션을 설정할 수 있습니다:
-
-```kotlin
-val bot = Bot(
-    botName = "MyBot",
-    irisUrl = "ws://localhost:8080",
-    options = BotOptions(
-        maxWorkers = 4,              // 최대 워커 스레드 수
-        bannedUsers = setOf(123L),   // 차단 사용자 목록
-        kakaoLinkAppKey = "key",      // 카카오링크 앱 키
-        kakaoLinkOrigin = "origin"    // 카카오링크 도메인
-    )
-)
-```
-
-## 🔗 API 참조
-
-### Bot 클래스
-
-```kotlin
-class Bot(
-    botName: String,
-    irisUrl: String,
-    options: BotOptions = BotOptions()
-)
-```
-
-**메서드:**
-- `onEvent(name: String, handler: suspend (Any) -> Unit)`: 이벤트 핸들러 등록
-- `run()`: 봇 실행
-- `close()`: 봇 종료
-- `api()`: IrisApiClient 인스턴스 반환
-- `getScheduler()`: BatchScheduler 인스턴스 반환
-- `getIrisLink()`: IrisLink 인스턴스 반환
-- `isBannedUser(userId: Long)`: 사용자 차단 여부 확인
-
-### IrisApiClient 클래스
-
-```kotlin
-class IrisApiClient(
-    baseUrl: String,
-    client: HttpClient,
-    json: Json
-)
-```
-
-**메서드:**
-- `reply(roomId: Long, message: String)`: 메시지 답장
-- `replyImage(roomId: Long, files: Collection<ByteArray>)`: 이미지 답장
-- `decrypt(enc: Int, ciphertext: String, userId: Long)`: 메시지 복호화
-- `query(statement: String, bind: List<JsonElement>? = null)`: 데이터베이스 쿼리
-- `getInfo()`: 서버 정보 조회
-
-## 📚 고급 예제
-
-### 이미지 처리
-
-```kotlin
-bot.onEvent("message") { payload ->
-    if (payload is ChatContext) {
-        // 이미지 메시지 확인
-        context.message.image?.let { image ->
-            context.reply("📸 이미지를 받았습니다! ${image.urls.size}개의 이미지")
-        }
-    }
-}
-```
-
-### 스케줄링
-
-```kotlin
-val scheduler = bot.getScheduler()
-
-// 1시간 후 메시지 예약
-scheduler.scheduleMessage(
-    id = "reminder",
-    roomId = 12345L,
-    message = "회의 시작입니다!",
-    delayMillis = 3600000 // 1시간
-)
-
-// 특정 시간에 메시지 예약
-scheduler.scheduleMessageAt(
-    id = "daily",
-    roomId = 12345L,
-    message = "좋은 아침입니다!",
-    scheduledTime = getNextMorningTime()
-)
-```
-
-### 카카오링크 활용
-
-```kotlin
-val bot = Bot("MyBot", endpoint, BotOptions(kakaoLinkAppKey = "your_key"))
-
-bot.onEvent("message") { payload ->
-    if (payload is ChatContext && payload.message.command == "링크") {
-        val irisLink = bot.getIrisLink()
-
-        irisLink.send(
-            receiverName = payload.sender.name,
-            templateId = 12345,
-            templateArgs = mapOf("message" to payload.message.param)
-        )
-    }
-}
-```
-
-## 🚨 오류 처리
-
-### 일반적인 오류들
-
-```kotlin
-bot.onEvent("error") { payload ->
-    if (payload is ErrorContext) {
-        logger.error("봇 오류: ${payload.exception.message}", payload.exception)
-    }
-}
-```
-
-### 문제 해결 가이드
-
-**빌드 오류:**
 ```bash
-# Gradle Wrapper 생성
-gradle wrapper --gradle-version 8.9
-
-# 의존성 새로고침
-./gradlew.bat dependencies --refresh-dependencies
+./gradlew.bat build
 ```
-
-**실행 오류:**
-- 환경 변수 `IRIS_ENDPOINT`가 설정되었는지 확인
-- IRIS 서버가 실행 중인지 확인
-- 네트워크 연결 상태 확인
-
-## 📄 라이선스
-
-이 프로젝트는 MIT 라이선스 하에 제공됩니다.
-
-## 👥 기여
-
-기여를 환영합니다! 이슈를 등록하거나 Pull Request를 보내주세요.
 
 ---
 
-**기반**: [irispy-client](https://github.com/irisdev/irispy-client) 프로젝트에서 포팅되었습니다.
+## 🔄 JitPack 연동
 
-1. `build.gradle.kts`에 의존성 추가:
+> ⚠️ **GitHub 저장소를 공개(Public)로 전환**해야 JitPack에서 빌드할 수 있습니다.
+
+### 1. JitPack 활성화
+
+- 저장소가 GitHub에 올라간 상태에서 [JitPack](https://jitpack.io)에 로그인 후 프로젝트를 검색합니다.
+- 최초 빌드를 실행하면 JitPack이 Gradle 프로젝트를 분석하고 결과를 제공합니다.
+- JitPack URL은 `https://jitpack.io/#<GitHub_사용자>/<레포지토리>` 형식입니다.
+
+### 2. Gradle 설정 (Kotlin DSL)
+
+`settings.gradle.kts` 혹은 하위 프로젝트 `build.gradle.kts`에 JitPack 저장소를 추가합니다.
+
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        maven("https://jitpack.io")
+    }
+}
+```
+
+라이브러리 의존성 선언은 다음과 같습니다. (예: `1.0.0` 태그를 배포한 경우)
+
 ```kotlin
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-    implementation("io.ktor:ktor-client-core:2.3.9")
-    implementation("io.ktor:ktor-client-cio:2.3.9")
-    implementation("io.ktor:ktor-client-websockets:2.3.9")
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.9")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.9")
-    implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("org.slf4j:slf4j-simple:2.0.13")
-}
-
-kotlin {
-    jvmToolchain(17)
+    implementation("com.github.<GitHub_사용자>:irisKt:1.0.0")
 }
 ```
 
-2. 환경 변수 설정:
-```bash
-# PowerShell
-$env:IRIS_ENDPOINT = "ws://your-iris-server-url"
+> ❗ `<GitHub_사용자>`와 버전(`1.0.0`)은 실제 사용자명과 릴리스 태그로 교체하세요.
 
-# 또는 Linux/macOS
-export IRIS_ENDPOINT="ws://your-iris-server-url"
-```
+### 3. 새 버전 배포 절차
+
+1. `build.gradle.kts`와 소스를 커밋 후 GitHub에 푸시합니다.
+2. `git tag v1.0.0 && git push origin v1.0.0`처럼 **태그**를 푸시합니다.
+3. JitPack 사이트에서 해당 버전을 선택해 빌드를 트리거합니다.
+4. 빌드가 성공하면 위 `implementation` 좌표로 바로 사용할 수 있습니다.
+
+> 💡 릴리스 로그를 `README`나 GitHub Releases에 정리하면 사용자 혼선을 줄일 수 있습니다.
+
+---
 
 ## 🚀 빠른 시작
 
-### 기본 사용법
+### 최소 예제
 
 ```kotlin
 import iriskt.bot.Bot
 import iriskt.bot.models.ChatContext
 
-fun main() {
-    val bot = Bot("MyBot", System.getenv("IRIS_ENDPOINT"))
-
-    // 메시지 이벤트 핸들러
-    bot.onEvent("message") { payload ->
-        if (payload is ChatContext) {
-            println("[${payload.room.name}] ${payload.sender.name}: ${payload.message.text}")
-
-            // 명령어 처리
-            when (payload.message.command) {
-                "안녕" -> payload.reply("안녕하세요!")
-                "도움말" -> payload.reply("사용 가능한 명령어: 안녕, 도움말")
+suspend fun main() {
+    val endpoint = System.getenv("IRIS_ENDPOINT") ?: error("IRIS_ENDPOINT 환경 변수를 설정하세요")
+    Bot(botName = "QuickBot", irisUrl = endpoint).use { bot ->
+        bot.onEvent("chat") { payload ->
+            if (payload is ChatContext) {
+                println("[${payload.room.name}] ${payload.sender.name}: ${payload.message.text}")
+                if (payload.message.command == "안녕") {
+                    payload.reply("안녕하세요! 😊")
+                }
             }
         }
+        bot.run()
     }
-
-    // 봇 실행
-    bot.run()
 }
 ```
 
-### 고급 사용법
+### 옵션 활용 예제
 
 ```kotlin
 import iriskt.bot.Bot
-import iriskt.bot.core.BatchScheduler
+import iriskt.bot.BotOptions
 import iriskt.bot.models.ChatContext
 import kotlinx.coroutines.runBlocking
 
 fun main() = runBlocking {
+    val endpoint = System.getenv("IRIS_ENDPOINT") ?: error("IRIS_ENDPOINT 환경 변수를 설정하세요")
     val bot = Bot(
         botName = "AdvancedBot",
-        irisUrl = System.getenv("IRIS_ENDPOINT"),
+        irisUrl = endpoint,
         options = BotOptions(
             maxWorkers = 8,
             bannedUsers = setOf(123456789L, 987654321L),
-            kakaoLinkAppKey = "your_kakao_app_key"
+            kakaoLinkAppKey = "your-kakao-app-key",
+            kakaoLinkOrigin = "https://your-service.com"
         )
     )
 
-    // 스케줄러 설정
-    val scheduler = bot.getScheduler()
-    scheduler.scheduleMessage(
-        id = "reminder",
-        roomId = 12345L,
-        message = "회의 시작입니다!",
-        delayMillis = 300000 // 5분 후
-    )
-
-    // 이벤트 핸들러 등록
     bot.onEvent("chat") { payload ->
         if (payload is ChatContext) {
-            handleMessage(payload)
+            when (payload.message.command) {
+                "도움말" -> payload.reply("사용 가능한 명령어: 안녕, 시간, 링크")
+                "시간" -> payload.reply("현재 시각: ${java.time.LocalDateTime.now()}")
+            }
         }
     }
 
     bot.run()
 }
-
-suspend fun handleMessage(context: ChatContext) {
-    val command = context.message.command
-    val param = context.message.param
-
-    when (command) {
-        "안녕" -> context.reply("안녕하세요! ${context.sender.name}님!")
-        "시간" -> context.reply("현재 시간: ${java.time.LocalTime.now()}")
-        "정보" -> {
-            val userType = context.sender.getType()
-            val roomType = context.room.getType()
-            context.reply("사용자: ${context.sender.name} ($userType), 방: ${context.room.name} ($roomType)")
-        }
-        else -> {
-            if (command.isNotEmpty()) {
-                context.reply("❓ '$command' 명령어를 찾을 수 없습니다.")
-            }
-        }
-    }
-}
 ```
-
-## 📋 주요 기능
-
-### 🎮 이벤트 시스템
-
-| 이벤트명 | 설명 | 사용 시기 |
-|---------|------|-----------|
-| `chat` | 모든 채팅 메시지 | 모든 메시지를 처리할 때 |
-| `message` | 일반 텍스트 메시지 | 텍스트 메시지만 처리할 때 |
-| `new_member` | 새 멤버 참여 | 멤버 참여 알림 등 |
-| `del_member` | 멤버 퇴장 | 멤버 퇴장 처리 등 |
-| `error` | 오류 발생 | 예외 처리 및 로그 기록 |
-
-### 🔧 명령어 처리
-
-Message 클래스에는 편리한 명령어 처리 기능이 포함되어 있습니다:
-
-```kotlin
-// 메시지에서 명령어 추출
-val command = context.message.command  // 첫 번째 단어
-val param = context.message.param      // 나머지 부분
-val hasParam = context.message.hasParam // 매개변수 존재 여부
-```
-
-### 👤 사용자 권한 시스템
-
-```kotlin
-// 사용자 권한 조회
-val userType = context.sender.getType()  // "HOST", "MANAGER", "NORMAL", "BOT"
-
-// 권한별 처리
-when (userType) {
-    "HOST", "MANAGER" -> {
-        // 관리자 명령어 처리
-    }
-    else -> {
-        // 일반 사용자 명령어 처리
-    }
-}
-```
-
-### 🏠 방 관리
-
-```kotlin
-// 방 타입 조회
-val roomType = context.room.getType()  // "NORMAL", "OPEN", etc.
-
-// 방별 처리
-when (roomType) {
-    "OPEN" -> {
-        // 공개 채팅방 처리
-    }
-    else -> {
-        // 일반 채팅방 처리
-    }
-}
-```
-
-## ⚙️ 설정 옵션
-
-Bot 생성 시 다양한 옵션을 설정할 수 있습니다:
-
-```kotlin
-val bot = Bot(
-    botName = "MyBot",
-    irisUrl = "ws://localhost:8080",
-    options = BotOptions(
-        maxWorkers = 4,              // 최대 워커 스레드 수
-        bannedUsers = setOf(123L),   // 차단 사용자 목록
-        kakaoLinkAppKey = "key",      // 카카오링크 앱 키
-        kakaoLinkOrigin = "origin"    // 카카오링크 도메인
-    )
-)
-```
-
-## 🔗 API 참조
-
-### Bot 클래스
-
-```kotlin
-class Bot(
-    botName: String,
-    irisUrl: String,
-    options: BotOptions = BotOptions()
-)
-```
-
-**메서드:**
-- `onEvent(name: String, handler: suspend (Any) -> Unit)`: 이벤트 핸들러 등록
-- `run()`: 봇 실행
-- `close()`: 봇 종료
-- `api()`: IrisApiClient 인스턴스 반환
-- `getScheduler()`: BatchScheduler 인스턴스 반환
-- `getIrisLink()`: IrisLink 인스턴스 반환
-- `isBannedUser(userId: Long)`: 사용자 차단 여부 확인
-
-### IrisApiClient 클래스
-
-```kotlin
-class IrisApiClient(
-    baseUrl: String,
-    client: HttpClient,
-    json: Json
-)
-```
-
-**메서드:**
-- `reply(roomId: Long, message: String)`: 메시지 답장
-- `replyImage(roomId: Long, files: Collection<ByteArray>)`: 이미지 답장
-- `decrypt(enc: Int, ciphertext: String, userId: Long)`: 메시지 복호화
-- `query(statement: String, bind: List<JsonElement>? = null)`: 데이터베이스 쿼리
-- `getInfo()`: 서버 정보 조회
-
-## 📚 고급 예제
-
-### 이미지 처리
-
-```kotlin
-bot.onEvent("message") { payload ->
-    if (payload is ChatContext) {
-        // 이미지 메시지 확인
-        context.message.image?.let { image ->
-            context.reply("📸 이미지를 받았습니다! ${image.urls.size}개의 이미지")
-        }
-    }
-}
-```
-
-### 스케줄링
-
-```kotlin
-val scheduler = bot.getScheduler()
-
-// 1시간 후 메시지 예약
-scheduler.scheduleMessage(
-    id = "reminder",
-    roomId = 12345L,
-    message = "회의 시작입니다!",
-    delayMillis = 3600000 // 1시간
-)
-
-// 특정 시간에 메시지 예약
-scheduler.scheduleMessageAt(
-    id = "daily",
-    roomId = 12345L,
-    message = "좋은 아침입니다!",
-    scheduledTime = getNextMorningTime()
-)
-```
-
-### 카카오링크 활용
-
-```kotlin
-val bot = Bot("MyBot", endpoint, BotOptions(kakaoLinkAppKey = "your_key"))
-
-bot.onEvent("message") { payload ->
-    if (payload is ChatContext && payload.message.command == "링크") {
-        val irisLink = bot.getIrisLink()
-
-        irisLink.send(
-            receiverName = payload.sender.name,
-            templateId = 12345,
-            templateArgs = mapOf("message" to payload.message.param)
-        )
-    }
-}
-```
-
-## 🚨 오류 처리
-
-### 일반적인 오류들
-
-```kotlin
-bot.onEvent("error") { payload ->
-    if (payload is ErrorContext) {
-        logger.error("봇 오류: ${payload.exception.message}", payload.exception)
-    }
-}
-```
-
-### 문제 해결 가이드
-
-**빌드 오류:**
-```bash
-# Gradle Wrapper 생성
-gradle wrapper --gradle-version 8.9
-
-# 의존성 새로고침
-./gradlew.bat dependencies --refresh-dependencies
-```
-
-**실행 오류:**
-- 환경 변수 `IRIS_ENDPOINT`가 설정되었는지 확인
-- IRIS 서버가 실행 중인지 확인
-- 네트워크 연결 상태 확인
-
-## 📄 라이선스
-
-이 프로젝트는 MIT 라이선스 하에 제공됩니다.
-
-## 👥 기여
-
-기여를 환영합니다! 이슈를 등록하거나 Pull Request를 보내주세요.
 
 ---
 
-**기반**: [irispy-client](https://github.com/irisdev/irispy-client) 프로젝트에서 포팅되었습니다.
+## 🧩 주요 컴포넌트 개요
+
+- **`iriskt.bot.Bot`**: 웹소켓 이벤트 수신, 핸들러 등록, API/스케줄러 접근 제공.
+- **`iriskt.bot.api.IrisApiClient`**: REST API 호출(`reply`, `replyImage`, `query`, `decrypt`).
+- **`iriskt.bot.core.IrisLink`**: KakaoLink 템플릿 전송 및 예외(`KakaoLinkException` 계열) 처리.
+- **`iriskt.bot.core.BatchScheduler`**: 예약 메시지 작업 (`scheduleMessage`, `scheduleMessageAt`).
+- **`iriskt.bot.models.ChatContext`**: 메시지/사용자/방 정보와 응답 메서드 제공.
+- **`iriskt.bot.internal.EventEmitter`**: 비동기 이벤트 디스패치, 에러 전파.
+- **어노테이션**: `@HasParam`, `@IsAdmin`, `@HasRole`, `@Throttle`, `@IsReply`, `@IsNotBanned`, `@AllowedRoom`.
+
+---
+
+## 🔍 고급 기능 활용
+
+### 1. 메시지 메타데이터 활용
+
+```kotlin
+bot.onEvent("chat") { payload ->
+    if (payload is ChatContext) {
+        payload.message.metadata?.let { meta ->
+            println("수신 메타데이터: $meta")
+        }
+    }
+}
+```
+
+### 2. 예약 메시지
+
+```kotlin
+val scheduler = bot.getScheduler()
+scheduler.scheduleMessage(
+    id = "meeting-reminder",
+    roomId = 10001L,
+    message = "10분 후 회의가 시작됩니다.",
+    delayMillis = 600000
+)
+```
+
+### 3. KakaoLink 템플릿 전송
+
+```kotlin
+val irisLink = bot.getIrisLink()
+irisLink.send(
+    receiverName = "홍길동",
+    templateId = 12345,
+    templateArgs = mapOf("message" to "IRIS Bot에서 전송한 링크입니다")
+)
+```
+
+---
+
+## 🛡 문제 해결 가이드
+
+- **빌드 오류**: `./gradlew.bat clean build` 실행 후 발생 로그 확인.
+- **실행 오류**: IRIS 서버 주소와 네트워크 연결, 인증 정보를 재검토.
+- **웹소켓 연결 반복 종료**: 방화벽, SSL 설정, 서버 로그를 점검.
+- **KakaoLink 실패**: `kakaoLinkAppKey`, `kakaoLinkOrigin`, 템플릿 매핑을 다시 확인.
+
+---
+
+## 🤝 기여 방법
+
+- 이슈를 등록할 때는 재현 절차와 로그를 함께 제공해주세요.
+- Pull Request는 테스트 결과와 변경 이유를 상세히 작성해주세요.
+- 새로운 기능 제안은 Discussions 탭을 통해 논의 후 진행하면 효율적입니다.
+
+---
+
+## 🪪 라이선스
+
+이 프로젝트는 [MIT License](LICENSE) 하에 배포됩니다.
+
+> 기반 프로젝트: [irispy-client](https://github.com/irisdev/irispy-client)

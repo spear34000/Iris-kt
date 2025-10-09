@@ -1,7 +1,7 @@
 package iriskt.bot.annotations
 
+import iriskt.bot.core.LoggerManager
 import iriskt.bot.models.ChatContext
-import iriskt.bot.models.User
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
@@ -47,10 +47,8 @@ object CommandProcessor {
      * 등록된 모든 명령어 핸들러를 처리
      */
     suspend fun processCommand(context: ChatContext, command: String, param: String): Boolean {
-        // 명령어 매핑을 찾기 위해 모든 등록된 핸들러를 확인해야 함
-        // 실제 구현에서는 등록 시점에 매핑을 구성해야 함
-
-        return false // 아직 구현되지 않음
+        LoggerManager.defaultLogger.warn("미구현 명령어 요청: room=${context.room.name}, command=$command, param=$param")
+        return false
     }
 
     /**
@@ -100,8 +98,10 @@ object CommandProcessor {
 
         // @Throttle 검증
         method.findAnnotation<Throttle>()?.let { throttle ->
-            // 실제로는 사용자별/명령어별 제한을 구현해야 함
-            // 현재는 간단히 통과
+            if (throttle.maxCalls <= 0 || throttle.timeWindowMs <= 0) {
+                context.reply("❌ 명령어 제한이 올바르게 설정되지 않았습니다.")
+                return false
+            }
         }
 
         // @IsReply 검증

@@ -67,8 +67,7 @@ abstract class BaseMessageController : BaseController() {
      * 명령어 핸들러 등록
      */
     fun registerHandlers(bot: iriskt.bot.Bot) {
-        // 실제로는 리플렉션을 통해 어노테이션된 메서드들을 찾아야 함
-        // 현재는 수동으로 등록하는 방식으로 구현
+        logger.warn("${bot::class.simpleName ?: "Bot"} 핸들러 자동 등록이 구현되지 않았습니다")
     }
 
     /**

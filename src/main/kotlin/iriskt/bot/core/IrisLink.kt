@@ -63,7 +63,10 @@ class IrisLink(
         return try {
             val encodedReceiver = URLEncoder.encode(receiverName, StandardCharsets.UTF_8)
             val encodedArgs = URLEncoder.encode(templateArgs.toString(), StandardCharsets.UTF_8)
-            LoggerManager.defaultLogger.info("카카오링크 전송: $receiverName <- $templateArgs")
+            LoggerManager.defaultLogger.info(
+                "카카오링크 전송 준비: receiver=$encodedReceiver, templateId=$templateId, args=$encodedArgs, " +
+                    "searchExact=$searchExact, searchFrom=$searchFrom, searchRoomType=$searchRoomType, appKey=$actualAppKey, origin=$actualOrigin"
+            )
             // 실제 구현에서는 HTTP 요청을 보내야 함
             true
         } catch (e: Exception) {
