@@ -101,9 +101,9 @@ export IRIS_ENDPOINT="ws://your-iris-server-url"
 
 ### 1. JitPack 활성화
 
-- 저장소가 GitHub에 올라간 상태에서 [JitPack](https://jitpack.io)에 로그인 후 프로젝트를 검색합니다.
-- 최초 빌드를 실행하면 JitPack이 Gradle 프로젝트를 분석하고 결과를 제공합니다.
-- JitPack URL은 `https://jitpack.io/#<GitHub_사용자>/<레포지토리>` 형식입니다.
+- 이 레포지토리는 이미 [JitPack](https://jitpack.io/#spear34000/Iris-kt)에 등록되어 있습니다.
+- 새로운 태그를 배포했다면 JitPack 대시보드에서 해당 태그를 선택해 빌드를 트리거하면 됩니다.
+- JitPack URL은 `https://jitpack.io/#spear34000/Iris-kt`입니다.
 
 ### 2. Gradle 설정 (Kotlin DSL)
 
@@ -121,11 +121,11 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("com.github.<GitHub_사용자>:irisKt:1.0.0")
+    implementation("com.github.spear34000:Iris-kt:1.0.0")
 }
 ```
 
-> ❗ `<GitHub_사용자>`와 버전(`1.0.0`)은 실제 사용자명과 릴리스 태그로 교체하세요.
+> ❗ 버전(`1.0.0`)은 실제로 배포한 태그(또는 `main-SNAPSHOT`)로 교체하세요.
 
 ### 3. 새 버전 배포 절차
 
