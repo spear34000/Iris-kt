@@ -1,0 +1,399 @@
+package com.spear.iriskt.core
+
+import iriskt.bot.annotations.*
+import iriskt.bot.models.ChatContext
+import iriskt.bot.models.ErrorContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.functions
+import kotlin.reflect.full.hasAnnotation
+
+/**
+ * Ïª®Ìä∏Î°§Îü¨ Í¥ÄÎ¶??¥Îûò?? */
+class ControllerManager(private val bot: Any) {
+    private val logger = LoggerManager.defaultLogger
+    private val controllers = mutableListOf<Any>()
+    private val messageHandlers = mutableMapOf<String, MutableList<CommandHandler>>()
+    private val eventHandlers = mutableMapOf<String, MutableList<EventHandler>>()
+    private val bootstrapHandlers = mutableListOf<BootstrapHandler>()
+    private val scheduleHandlers = mutableListOf<ScheduleHandler>()
+    private val scope = CoroutineScope(Dispatchers.Default)
+
+    /**
+     * Ïª®Ìä∏Î°§Îü¨ ?±Î°ù
+     */
+    fun registerController(controller: Any) {
+        controllers.add(controller)
+        processController(controller)
+    }
+
+    /**
+     * Ïª®Ìä∏Î°§Îü¨ Ï≤òÎ¶¨
+     */
+    private fun processController(controller: Any) {
+        val controllerClass = controller::class
+        
+        // Î∂Ä?∏Ïä§?∏Îû© ?∏Îì§???±Î°ù
+        if (controllerClass.hasAnnotation<BootstrapController>()) {
+            registerBootstrapHandlers(controller)
+        }
+        
+        // Î∞∞Ïπò ?∏Îì§???±Î°ù
+        if (controllerClass.hasAnnotation<BatchController>()) {
+            registerScheduleHandlers(controller)
+        }
+        
+        // Î©îÏãúÏßÄ ?∏Îì§???±Î°ù
+        if (controllerClass.hasAnnotation<MessageController>() || 
+            controllerClass.hasAnnotation<ChatController>() || 
+            controllerClass.hasAnnotation<Controller>()) {
+            registerMessageHandlers(controller)
+        }
+        
+        // ?¥Î≤§???∏Îì§???±Î°ù
+        registerEventHandlers(controller)
+    }
+
+    /**
+     * Î∂Ä?∏Ïä§?∏Îû© ?∏Îì§???±Î°ù
+     */
+    private fun registerBootstrapHandlers(controller: Any) {
+        controller::class.functions.forEach { function ->
+            function.findAnnotation<Bootstrap>()?.let { annotation ->
+                bootstrapHandlers.add(
+                    BootstrapHandler(
+                        controller = controller,
+                        function = function,
+                        priority = annotation.priority
+                    )
+                )
+            }
+        }
+        
+        // ?∞ÏÑ†?úÏúÑ???∞Îùº ?ïÎ†¨
+        bootstrapHandlers.sortBy { it.priority }
+    }
+
+    /**
+     * ?§Ï?Ï§??∏Îì§???±Î°ù
+     */
+    private fun registerScheduleHandlers(controller: Any) {
+        controller::class.functions.forEach { function ->
+            function.findAnnotation<Schedule>()?.let { annotation ->
+                scheduleHandlers.add(
+                    ScheduleHandler(
+                        controller = controller,
+                        function = function,
+                        interval = annotation.interval
+                    )
+                )
+            }
+        }
+    }
+
+    /**
+     * Î©îÏãúÏßÄ ?∏Îì§???±Î°ù
+     */
+    private fun registerMessageHandlers(controller: Any) {
+        val controllerClass = controller::class
+        val prefix = controllerClass.findAnnotation<Prefix>()?.prefix ?: ""
+        
+        controller::class.functions.forEach { function ->
+            // Î¥?Î™ÖÎ†π???±Î°ù
+            function.findAnnotation<BotCommand>()?.let { annotation ->
+                val commandName = prefix + annotation.command
+                val handler = CommandHandler(
+                    controller = controller,
+                    function = function,
+                    command = commandName,
+                    description = annotation.description
+                )
+                
+                messageHandlers.getOrPut(commandName) { mutableListOf() }.add(handler)
+            }
+            
+            // ?ÑÏ?Îß?Î™ÖÎ†π???±Î°ù
+            function.findAnnotation<HelpCommand>()?.let { annotation ->
+                val commandName = prefix + annotation.command
+                val handler = CommandHandler(
+                    controller = controller,
+                    function = function,
+                    command = commandName,
+                    description = "?ÑÏ?Îß?
+                )
+                
+                messageHandlers.getOrPut(commandName) { mutableListOf() }.add(handler)
+            }
+        }
+    }
+
+    /**
+     * ?¥Î≤§???∏Îì§???±Î°ù
+     */
+    private fun registerEventHandlers(controller: Any) {
+        controller::class.functions.forEach { function ->
+            // Î©îÏãúÏßÄ ?Ä?ÖÎ≥Ñ ?∏Îì§???±Î°ù
+            registerMessageTypeHandlers(controller, function)
+            
+            // ?ºÎìú ?Ä?ÖÎ≥Ñ ?∏Îì§???±Î°ù
+            registerFeedTypeHandlers(controller, function)
+        }
+    }
+
+    /**
+     * Î©îÏãúÏßÄ ?Ä?ÖÎ≥Ñ ?∏Îì§???±Î°ù
+     */
+    private fun registerMessageTypeHandlers(controller: Any, function: KFunction<*>) {
+        val eventType = when {
+            function.hasAnnotation<OnMessage>() -> "message"
+            function.hasAnnotation<OnNormalMessage>() -> "normal_message"
+            function.hasAnnotation<OnPhotoMessage>() -> "photo_message"
+            function.hasAnnotation<OnImageMessage>() -> "image_message"
+            function.hasAnnotation<OnVideoMessage>() -> "video_message"
+            function.hasAnnotation<OnAudioMessage>() -> "audio_message"
+            function.hasAnnotation<OnFileMessage>() -> "file_message"
+            function.hasAnnotation<OnMapMessage>() -> "map_message"
+            function.hasAnnotation<OnEmoticonMessage>() -> "emoticon_message"
+            function.hasAnnotation<OnProfileMessage>() -> "profile_message"
+            function.hasAnnotation<OnMultiPhotoMessage>() -> "multi_photo_message"
+            function.hasAnnotation<OnNewMultiPhotoMessage>() -> "new_multi_photo_message"
+            function.hasAnnotation<OnReplyMessage>() -> "reply_message"
+            else -> null                                                        
+        }
+        
+        eventType?.let {
+            eventHandlers.getOrPut(it) { mutableListOf() }.add(
+                EventHandler(
+                    controller = controller,
+                    function = function,
+                    eventType = it
+                )
+            )
+        }
+    }
+
+    /**
+     * ?ºÎìú ?Ä?ÖÎ≥Ñ ?∏Îì§???±Î°ù
+     */
+    private fun registerFeedTypeHandlers(controller: Any, function: KFunction<*>) {
+        val eventType = when {
+            function.hasAnnotation<OnFeedMessage>() -> "feed"
+            function.hasAnnotation<OnInviteUserFeed>() -> "invite_user_feed"
+            function.hasAnnotation<OnLeaveUserFeed>() -> "leave_user_feed"
+            function.hasAnnotation<OnDeleteMessageFeed>() -> "delete_message_feed"
+            function.hasAnnotation<OnHideMessageFeed>() -> "hide_message_feed"
+            function.hasAnnotation<OnPromoteManagerFeed>() -> "promote_manager_feed"
+            function.hasAnnotation<OnDemoteManagerFeed>() -> "demote_manager_feed"
+            function.hasAnnotation<OnHandOverHostFeed>() -> "hand_over_host_feed"
+            function.hasAnnotation<OnOpenChatJoinUserFeed>() -> "open_chat_join_user_feed"
+            function.hasAnnotation<OnOpenChatKickedUserFeed>() -> "open_chat_kicked_user_feed"
+            else -> null
+        }
+        
+        eventType?.let {
+            eventHandlers.getOrPut(it) { mutableListOf() }.add(
+                EventHandler(
+                    controller = controller,
+                    function = function,
+                    eventType = it
+                )
+            )
+        }
+    }
+
+    /**
+     * Î∂Ä?∏Ïä§?∏Îû© ?§Ìñâ
+     */
+    suspend fun runBootstrap() {
+        for (handler in bootstrapHandlers) {
+            try {
+                handler.invoke()
+            } catch (e: Exception) {
+                logger.error("Î∂Ä?∏Ïä§?∏Îû© ?§Ìñâ Ï§??§Î•ò Î∞úÏÉù", e)
+            }
+        }
+    }
+
+    /**
+     * ?§Ï?Ï§??§Ìñâ
+     */
+    fun startSchedulers() {
+        for (handler in scheduleHandlers) {
+            if (handler.interval > 0) {
+                val scheduler = BatchScheduler.getInstance()
+                scheduler.scheduleAtFixedRate(handler.interval) {
+                    scope.launch {
+                        try {
+                            handler.invoke()
+                        } catch (e: Exception) {
+                            logger.error("?§Ï?Ï§??ëÏóÖ ?§Ìñâ Ï§??§Î•ò Î∞úÏÉù", e)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Î©îÏãúÏßÄ Ï≤òÎ¶¨
+     */
+    suspend fun handleMessage(context: ChatContext) {
+        val command = context.message.command
+        
+        // Î™ÖÎ†π???∏Îì§???§Ìñâ
+        messageHandlers[command]?.forEach { handler ->
+            try {
+                if (checkConditions(handler, context)) {
+                    handler.invoke(context)
+                }
+            } catch (e: Exception) {
+                logger.error("Î©îÏãúÏßÄ ?∏Îì§???§Ìñâ Ï§??§Î•ò Î∞úÏÉù", e)
+                handleError(ErrorContext("message", handler.function, e, listOf(context)))
+            }
+        }
+        
+        // ?¥Î≤§???∏Îì§???§Ìñâ
+        val messageType = getMessageType(context)
+        eventHandlers[messageType]?.forEach { handler ->
+            try {
+                if (checkConditions(handler, context)) {
+                    handler.invoke(context)
+                }
+            } catch (e: Exception) {
+                logger.error("?¥Î≤§???∏Îì§???§Ìñâ Ï§??§Î•ò Î∞úÏÉù", e)
+                handleError(ErrorContext("event", handler.function, e, listOf(context)))
+            }
+        }
+    }
+
+    /**
+     * Î©îÏãúÏßÄ ?Ä???ïÏù∏
+     */
+    private fun getMessageType(context: ChatContext): String {
+        return when (context.message.type) {
+            1 -> "normal_message"
+            2 -> "photo_message"
+            // Ï∂îÍ??ÅÏù∏ Î©îÏãúÏßÄ ?Ä??Îß§Ìïë
+            else -> "message"
+        }
+    }
+
+    /**
+     * Ï°∞Í±¥ ?ïÏù∏
+     */
+    private fun checkConditions(handler: Any, context: ChatContext): Boolean {
+        val function = when (handler) {
+            is CommandHandler -> handler.function
+            is EventHandler -> handler.function
+            else -> return true
+        }
+        
+        // HasParam Ï°∞Í±¥ ?ïÏù∏
+        if (function.hasAnnotation<HasParam>() && context.message.param.isBlank()) {
+            return false
+        }
+        
+        // IsReply Ï°∞Í±¥ ?ïÏù∏
+        if (function.hasAnnotation<IsReply>() && context.message.metadata?.get("reply_id") == null) {
+            context.reply("Î©îÏÑ∏ÏßÄ???µÏû•?òÏó¨ ?îÏ≤≠?òÏÑ∏??")
+            return false
+        }
+        
+        // IsAdmin Ï°∞Í±¥ ?ïÏù∏
+        if (function.hasAnnotation<IsAdmin>() && context.sender.type != "HOST" && context.sender.type != "MANAGER") {
+            context.reply("Í¥ÄÎ¶¨ÏûêÎß??¨Ïö©?????àÎäî Í∏∞Îä•?ÖÎãà??")
+            return false
+        }
+        
+        // IsNotBanned Ï°∞Í±¥ ?ïÏù∏
+        if (function.hasAnnotation<IsNotBanned>() && bot is iriskt.bot.Bot) {
+            if (bot.isBannedUser(context.sender.id)) {
+                return false
+            }
+        }
+        
+        // HasRole Ï°∞Í±¥ ?ïÏù∏
+        function.findAnnotation<HasRole>()?.let { annotation ->
+            if (!annotation.roles.contains(context.sender.type)) {
+                context.reply("Í∂åÌïú???ÜÏäµ?àÎã§.")
+                return false
+            }
+        }
+        
+        // AllowedRoom Ï°∞Í±¥ ?ïÏù∏
+        function.findAnnotation<AllowedRoom>()?.let { annotation ->
+            if (!annotation.rooms.contains(context.room.name)) {
+                context.reply("??Î∞©Ïóê?úÎäî ?¨Ïö©?????ÜÎäî Í∏∞Îä•?ÖÎãà??")
+                return false
+            }
+        }
+        
+        return true
+    }
+
+    /**
+     * ?êÎü¨ Ï≤òÎ¶¨
+     */
+    private suspend fun handleError(errorContext: ErrorContext) {
+        eventHandlers["error"]?.forEach { handler ->
+            try {
+                handler.invoke(errorContext)
+            } catch (e: Exception) {
+                logger.error("?êÎü¨ ?∏Îì§???§Ìñâ Ï§??§Î•ò Î∞úÏÉù", e)
+            }
+        }
+    }
+
+    /**
+     * Î™ÖÎ†π???∏Îì§???¥Îûò??     */
+    data class CommandHandler(
+        val controller: Any,
+        val function: KFunction<*>,
+        val command: String,
+        val description: String
+    ) {
+        suspend fun invoke(context: ChatContext) {
+            function.call(controller, context)
+        }
+    }
+
+    /**
+     * ?¥Î≤§???∏Îì§???¥Îûò??     */
+    data class EventHandler(
+        val controller: Any,
+        val function: KFunction<*>,
+        val eventType: String
+    ) {
+        suspend fun invoke(context: Any) {
+            function.call(controller, context)
+        }
+    }
+
+    /**
+     * Î∂Ä?∏Ïä§?∏Îû© ?∏Îì§???¥Îûò??     */
+    data class BootstrapHandler(
+        val controller: Any,
+        val function: KFunction<*>,
+        val priority: Int
+    ) {
+        suspend fun invoke() {
+            function.call(controller)
+        }
+    }
+
+    /**
+     * ?§Ï?Ï§??∏Îì§???¥Îûò??     */
+    data class ScheduleHandler(
+        val controller: Any,
+        val function: KFunction<*>,
+        val interval: Long
+    ) {
+        suspend fun invoke() {
+            function.call(controller)
+        }
+    }
+}

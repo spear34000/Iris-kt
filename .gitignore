@@ -2,11 +2,13 @@
 .gradle/
 build/
 gradle-app.setting
-!gradle-wrapper.jar
-!gradle-wrapper.properties
+gradle_local/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
 
 # Kotlin
 .kotlin/
+*.kotlin_module
 
 # IDE
 .idea/
@@ -14,32 +16,49 @@ gradle-app.setting
 *.iml
 *.iws
 *.ipr
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Logs
 *.log
 logs/
+error_log*.txt
+temp_build_log.txt
 
 # Runtime
 *.class
+*.hprof
 
 # Package Files
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.war
 *.ear
 *.zip
 *.tar.gz
 *.rar
 
-# Gradle Wrapper (if using)
-gradle-wrapper.jar
-gradle-wrapper.properties
+# Local Configuration
+local.properties
+gradle.properties.local
 
 # Project Specific
 *.tmp
 *.temp
 .cache/
 out/
+
+# Android
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Test Results
+test-results/
+test-output/
