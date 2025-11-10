@@ -1,7 +1,5 @@
 # Iris-kt API 레퍼런스
 
-> 본 문서는 [@tsuki-chat/node-iris](https://github.com/Tsuki-Chat/node-iris) 레퍼런스를 기반으로 작성되었습니다.
-
 ## 목차
 
 - [Bot 클래스](#bot-클래스)
@@ -706,7 +704,6 @@ try {
 
 ## 참고 자료
 
-- [node-iris GitHub](https://github.com/Tsuki-Chat/node-iris)
 - [irispy-client GitHub](https://github.com/irisdev/irispy-client)
 - [메인 README](../README.md)
 - [예제 모음](../examples/README.md)

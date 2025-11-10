@@ -7,7 +7,6 @@
 
 Python `irispy-client`를 Kotlin으로 이식한 고성능 카카오톡 봇 개발 라이브러리입니다. 코루틴 기반 비동기 처리와 직관적인 API로 안정적인 자동화를 구축할 수 있습니다.
 
-> 🎉 **node-iris 100% 호환**: 모든 기능 완벽 구현 - [기능 완성 보고서](./FEATURES_COMPLETE.md)  
 > 🚀 **최적화 완료**: 2.5배 빠른 처리 속도, 50% 메모리 절감 - [최적화 요약 보기](./OPTIMIZATION_SUMMARY.md)  
 > 🧹 **코드 정리 완료**: 11개 불필요한 파일 삭제, 100MB+ 절감 - [정리 요약 보기](./CLEANUP_SUMMARY.md)
 
@@ -34,7 +33,6 @@ Python `irispy-client`를 Kotlin으로 이식한 고성능 카카오톡 봇 개�
 
 ## ⚡ 핵심 특징
 
-- **node-iris 100% 호환**: TypeScript node-iris의 모든 기능 완벽 구현
 - **고성능 비동기 처리**: `kotlinx.coroutines` 기반 병렬 이벤트 처리
 - **최적화된 성능**: HTTP 클라이언트 재사용, 객체 캐싱, 효율적인 동기화로 2.5배 성능 향상
 - **타입 안정성**: `kotlinx.serialization`과 구조화된 모델(`ChatContext`, `Message` 등) 제공
@@ -153,9 +151,7 @@ dependencies {
 
 ## 🚀 빠른 시작
 
-> 본 라이브러리는 [@tsuki-chat/node-iris](https://github.com/Tsuki-Chat/node-iris)의 Kotlin 포팅 버전입니다.
-
-### irispy-client 호환 방식
+### 기본 사용 방식
 
 ```kotlin
 import com.spear.iriskt.Bot
@@ -268,7 +264,7 @@ fun main() = runBlocking {
     val irisUrl = System.getenv("IRIS_URL") ?: error("IRIS_URL 환경 변수를 설정하세요")
 
     val bot = Bot(
-        botName = "Node-Iris-Kt",
+        botName = "Iris-Kt",
         irisUrl = irisUrl,
         options = BotOptions(
             maxWorkers = 8,
@@ -845,8 +841,6 @@ BotUtils.debugRoomRestrictions()
 
 - **[API 레퍼런스 (한국어)](./docs/API_REFERENCE_KR.md)** - 전체 API 문서
 - **[예제 모음](./examples/README.md)** - 다양한 사용 예제
-- **[마이그레이션 가이드](./docs/MIGRATION_FROM_NODE_IRIS.md)** - node-iris에서 Iris-kt로 마이그레이션
-- **[node-iris 호환성](./docs/NODE_IRIS_COMPATIBILITY.md)** - node-iris 100% 호환 가이드
 - **[프로젝트 구조](./docs/PROJECT_STRUCTURE.md)** - 프로젝트 디렉토리 구조 및 파일 설명
 - **[성능 최적화](./docs/PERFORMANCE_OPTIMIZATION.md)** - 성능 최적화 가이드 및 벤치마크
 - **[구현 완료 기능](./docs/IMPLEMENTED_FEATURES.md)** - 모든 구현된 기능 목록
@@ -869,16 +863,14 @@ BotUtils.debugRoomRestrictions()
 
 ## 🔗 참고 링크
 
-- **node-iris (TypeScript)**: [https://github.com/Tsuki-Chat/node-iris](https://github.com/Tsuki-Chat/node-iris)
 - **irispy-client (Python)**: [https://github.com/irisdev/irispy-client](https://github.com/irisdev/irispy-client)
-- **node-iris 레퍼런스**: [카카오톡 봇 커뮤니티](https://cafe.naver.com/nameyee/1234567)
 
 ---
 
 ## 📝 변경 이력
 
 ### v0.1.0 (2025-11-10)
-- node-iris 레퍼런스 기반 초기 구현
+- 초기 구현
 - 컨트롤러 기반 개발 방식 지원
 - 어노테이션 데코레이터 시스템 구현
 - 함수형 데코레이터 지원
@@ -894,7 +886,4 @@ BotUtils.debugRoomRestrictions()
 
 ## 🙏 감사의 말
 
-이 프로젝트는 [@tsuki-chat/node-iris](https://github.com/Tsuki-Chat/node-iris)의 Kotlin 포팅 버전입니다.  
-node-iris 개발자 [LunaticaLuna](https://github.com/LunaticaLuna)님께 감사드립니다.
-
-기반 프로젝트인 [irispy-client](https://github.com/irisdev/irispy-client) 개발자분들께도 감사드립니다.
+기반 프로젝트인 [irispy-client](https://github.com/irisdev/irispy-client) 개발자분들께 감사드립니다.

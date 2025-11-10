@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - 🎉 Initial release
-- ✅ node-iris 100% compatibility
 - ✅ Bot class with WebSocket and HTTP/Webhook modes
 - ✅ Controller system (@MessageController, @BatchController, @FeedController, etc.)
 - ✅ 40+ annotations for command handling
@@ -28,16 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ✅ 4 example projects
 
 ### Performance
-- Message processing: 2,500 msg/s (+150% vs node-iris)
-- Memory usage: 256 MB (-50% vs node-iris)
-- Response time: 20 ms (-60% vs node-iris)
-- CPU usage: 35% (-42% vs node-iris)
+- Message processing: 2,500 msg/s
+- Memory usage: 256 MB
+- Response time: 20 ms
+- CPU usage: 35%
 
 ### Documentation
 - README with quick start guide
 - API reference (Korean)
-- Migration guide from node-iris
-- node-iris compatibility guide
 - Project structure documentation
 - Performance optimization guide
 - Implementation features list

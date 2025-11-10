@@ -187,5 +187,4 @@ Bot(
 ## 📖 추가 자료
 
 - [메인 README](../README.md)
-- [node-iris 레퍼런스](https://github.com/Tsuki-Chat/node-iris)
 - [irispy-client](https://github.com/irisdev/irispy-client)

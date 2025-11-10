@@ -130,7 +130,7 @@ class App {
         val irisUrl = System.getenv("IRIS_URL") ?: error("IRIS_URL 환경 변수를 설정하세요")
 
         bot = Bot(
-            botName = "Node-Iris-Kt",
+            botName = "Iris-Kt",
             irisUrl = irisUrl,
             options = BotOptions(
                 maxWorkers = 8,
