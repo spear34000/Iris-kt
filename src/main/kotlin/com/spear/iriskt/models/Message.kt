@@ -1,12 +1,14 @@
 package com.spear.iriskt.models
 
+import com.spear.iriskt.api.IrisApiClient
+
 data class Message(
     val id: Long = -1,
     val type: Int = 0,
     val text: String = "",
     val attachment: String? = null,
     val metadata: Map<String, Any>? = null,
-    private val api: iriskt.bot.api.IrisApiClient? = null
+    private val api: IrisApiClient? = null
 ) {
     /**
      * 메시지의 명령어 부분 (첫 번째 단어)
@@ -57,38 +59,110 @@ data class Message(
         }
     
     /**
-     * 답장 메시지 여부
+     * 답장 메시지 여부 (type = 26)
      */
     val isReply: Boolean
-        get() = metadata?.containsKey("reply_id") == true
+        get() = type == 26 || metadata?.containsKey("reply_id") == true
     
     /**
-     * 사진 메시지 여부
+     * 텍스트 메시지 여부 (type = 1, 첨부파일 없음)
+     */
+    val isText: Boolean
+        get() = type == 1 && attachment == null
+    
+    /**
+     * 링크 메시지 여부 (type = 1, 첨부파일 있음)
+     */
+    val isLink: Boolean
+        get() = type == 1 && attachment != null
+    
+    /**
+     * 사진 메시지 여부 (type = 2)
      */
     val isPhoto: Boolean
-        get() = type == 2 || type == 27
+        get() = type == 2
     
     /**
-     * 비디오 메시지 여부
+     * 비디오 메시지 여부 (type = 3)
      */
     val isVideo: Boolean
         get() = type == 3
     
     /**
-     * 오디오 메시지 여부
+     * 연락처 메시지 여부 (type = 4)
      */
-    val isAudio: Boolean
+    val isContact: Boolean
         get() = type == 4
     
     /**
-     * 파일 메시지 여부
+     * 오디오 메시지 여부 (type = 5)
      */
-    val isFile: Boolean
+    val isAudio: Boolean
         get() = type == 5
     
     /**
-     * 이모티콘 메시지 여부
+     * 이모티콘 메시지 여부 (type = 6)
      */
     val isEmoticon: Boolean
+        get() = type == 6
+    
+    /**
+     * 이모티콘 썸네일 메시지 여부 (type = 12, 20)
+     */
+    val isEmoticonThumbnail: Boolean
+        get() = type == 12 || type == 20
+    
+    /**
+     * 투표 메시지 여부 (type = 14)
+     */
+    val isVote: Boolean
+        get() = type == 14
+    
+    /**
+     * 프로필 메시지 여부 (type = 17)
+     */
+    val isProfile: Boolean
+        get() = type == 17
+    
+    /**
+     * 파일 메시지 여부 (type = 18)
+     */
+    val isFile: Boolean
         get() = type == 18
+    
+    /**
+     * 검색 메시지 여부 (type = 23)
+     */
+    val isSearch: Boolean
+        get() = type == 23
+    
+    /**
+     * 공지 메시지 여부 (type = 24)
+     */
+    val isNotice: Boolean
+        get() = type == 24
+    
+    /**
+     * 묶음사진 메시지 여부 (type = 27)
+     */
+    val isMultiPhoto: Boolean
+        get() = type == 27
+    
+    /**
+     * 보이스톡 메시지 여부 (type = 51)
+     */
+    val isVoiceTalk: Boolean
+        get() = type == 51
+    
+    /**
+     * 투표 등록 메시지 여부 (type = 97)
+     */
+    val isVoteRegister: Boolean
+        get() = type == 97
+    
+    /**
+     * 공유 메시지 여부 (type = 98)
+     */
+    val isShare: Boolean
+        get() = type == 98
 }

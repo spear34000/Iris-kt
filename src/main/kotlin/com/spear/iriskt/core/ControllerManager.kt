@@ -1,8 +1,8 @@
 package com.spear.iriskt.core
 
-import iriskt.bot.annotations.*
-import iriskt.bot.models.ChatContext
-import iriskt.bot.models.ErrorContext
+import com.spear.iriskt.annotations.*
+import com.spear.iriskt.models.ChatContext
+import com.spear.iriskt.models.ErrorContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -13,7 +13,7 @@ import kotlin.reflect.full.functions
 import kotlin.reflect.full.hasAnnotation
 
 /**
- * 컨트롤러 관�??�래?? */
+ * 컨트롤러 관�??�래?? */
 class ControllerManager(private val bot: Any) {
     private val logger = LoggerManager.defaultLogger
     private val controllers = mutableListOf<Any>()
@@ -24,7 +24,7 @@ class ControllerManager(private val bot: Any) {
     private val scope = CoroutineScope(Dispatchers.Default)
 
     /**
-     * 컨트롤러 ?�록
+     * 컨트롤러 ?�록
      */
     fun registerController(controller: Any) {
         controllers.add(controller)
@@ -37,29 +37,29 @@ class ControllerManager(private val bot: Any) {
     private fun processController(controller: Any) {
         val controllerClass = controller::class
         
-        // 부?�스?�랩 ?�들???�록
+        // 부?�스?�랩 ?�들???�록
         if (controllerClass.hasAnnotation<BootstrapController>()) {
             registerBootstrapHandlers(controller)
         }
         
-        // 배치 ?�들???�록
+        // 배치 ?�들???�록
         if (controllerClass.hasAnnotation<BatchController>()) {
             registerScheduleHandlers(controller)
         }
         
-        // 메시지 ?�들???�록
+        // 메시지 ?�들???�록
         if (controllerClass.hasAnnotation<MessageController>() || 
             controllerClass.hasAnnotation<ChatController>() || 
             controllerClass.hasAnnotation<Controller>()) {
             registerMessageHandlers(controller)
         }
         
-        // ?�벤???�들???�록
+        // ?�벤???�들???�록
         registerEventHandlers(controller)
     }
 
     /**
-     * 부?�스?�랩 ?�들???�록
+     * 부?�스?�랩 ?�들???�록
      */
     private fun registerBootstrapHandlers(controller: Any) {
         controller::class.functions.forEach { function ->
@@ -74,12 +74,12 @@ class ControllerManager(private val bot: Any) {
             }
         }
         
-        // ?�선?�위???�라 ?�렬
+        // ?�선?�위???�라 ?�렬
         bootstrapHandlers.sortBy { it.priority }
     }
 
     /**
-     * ?��?�??�들???�록
+     * ?��?�??�들???�록
      */
     private fun registerScheduleHandlers(controller: Any) {
         controller::class.functions.forEach { function ->
@@ -96,14 +96,14 @@ class ControllerManager(private val bot: Any) {
     }
 
     /**
-     * 메시지 ?�들???�록
+     * 메시지 ?�들???�록
      */
     private fun registerMessageHandlers(controller: Any) {
         val controllerClass = controller::class
         val prefix = controllerClass.findAnnotation<Prefix>()?.prefix ?: ""
         
         controller::class.functions.forEach { function ->
-            // �?명령???�록
+            // �?명령???�록
             function.findAnnotation<BotCommand>()?.let { annotation ->
                 val commandName = prefix + annotation.command
                 val handler = CommandHandler(
@@ -116,14 +116,14 @@ class ControllerManager(private val bot: Any) {
                 messageHandlers.getOrPut(commandName) { mutableListOf() }.add(handler)
             }
             
-            // ?��?�?명령???�록
+            // ?��?�?명령???�록
             function.findAnnotation<HelpCommand>()?.let { annotation ->
                 val commandName = prefix + annotation.command
                 val handler = CommandHandler(
                     controller = controller,
                     function = function,
                     command = commandName,
-                    description = "?��?�?
+                    description = "?��?�?
                 )
                 
                 messageHandlers.getOrPut(commandName) { mutableListOf() }.add(handler)
@@ -132,36 +132,47 @@ class ControllerManager(private val bot: Any) {
     }
 
     /**
-     * ?�벤???�들???�록
+     * ?�벤???�들???�록
      */
     private fun registerEventHandlers(controller: Any) {
         controller::class.functions.forEach { function ->
-            // 메시지 ?�?�별 ?�들???�록
+            // 메시지 ?�?�별 ?�들???�록
             registerMessageTypeHandlers(controller, function)
             
-            // ?�드 ?�?�별 ?�들???�록
+            // ?�드 ?�?�별 ?�들???�록
             registerFeedTypeHandlers(controller, function)
         }
     }
 
     /**
-     * 메시지 ?�?�별 ?�들???�록
+     * 메시지 타입별 핸들러 등록
      */
     private fun registerMessageTypeHandlers(controller: Any, function: KFunction<*>) {
         val eventType = when {
             function.hasAnnotation<OnMessage>() -> "message"
-            function.hasAnnotation<OnNormalMessage>() -> "normal_message"
+            // 새로운 어노테이션
+            function.hasAnnotation<OnTextMessage>() -> "text_message"
+            function.hasAnnotation<OnLinkMessage>() -> "link_message"
             function.hasAnnotation<OnPhotoMessage>() -> "photo_message"
-            function.hasAnnotation<OnImageMessage>() -> "image_message"
             function.hasAnnotation<OnVideoMessage>() -> "video_message"
+            function.hasAnnotation<OnContactMessage>() -> "contact_message"
             function.hasAnnotation<OnAudioMessage>() -> "audio_message"
-            function.hasAnnotation<OnFileMessage>() -> "file_message"
-            function.hasAnnotation<OnMapMessage>() -> "map_message"
             function.hasAnnotation<OnEmoticonMessage>() -> "emoticon_message"
+            function.hasAnnotation<OnEmoticonThumbnailMessage>() -> "emoticon_thumbnail_message"
+            function.hasAnnotation<OnVoteMessage>() -> "vote_message"
             function.hasAnnotation<OnProfileMessage>() -> "profile_message"
-            function.hasAnnotation<OnMultiPhotoMessage>() -> "multi_photo_message"
-            function.hasAnnotation<OnNewMultiPhotoMessage>() -> "new_multi_photo_message"
+            function.hasAnnotation<OnFileMessage>() -> "file_message"
+            function.hasAnnotation<OnSearchMessage>() -> "search_message"
+            function.hasAnnotation<OnNoticeMessage>() -> "notice_message"
             function.hasAnnotation<OnReplyMessage>() -> "reply_message"
+            function.hasAnnotation<OnMultiPhotoMessage>() -> "multi_photo_message"
+            function.hasAnnotation<OnVoiceTalkMessage>() -> "voice_talk_message"
+            function.hasAnnotation<OnVoteRegisterMessage>() -> "vote_register_message"
+            function.hasAnnotation<OnShareMessage>() -> "share_message"
+            // 하위 호환용 (Deprecated)
+            function.hasAnnotation<OnNormalMessage>() -> "text_message"
+            function.hasAnnotation<OnImageMessage>() -> "photo_message"
+            function.hasAnnotation<OnNewMultiPhotoMessage>() -> "multi_photo_message"
             else -> null                                                        
         }
         
@@ -177,20 +188,27 @@ class ControllerManager(private val bot: Any) {
     }
 
     /**
-     * ?�드 ?�?�별 ?�들???�록
+     * 피드 타입별 핸들러 등록
      */
     private fun registerFeedTypeHandlers(controller: Any, function: KFunction<*>) {
         val eventType = when {
             function.hasAnnotation<OnFeedMessage>() -> "feed"
-            function.hasAnnotation<OnInviteUserFeed>() -> "invite_user_feed"
-            function.hasAnnotation<OnLeaveUserFeed>() -> "leave_user_feed"
+            // 새로운 어노테이션
+            function.hasAnnotation<OnLeaveFeed>() -> "leave_feed"
+            function.hasAnnotation<OnJoinFeed>() -> "join_feed"
+            function.hasAnnotation<OnForcedExitFeed>() -> "forced_exit_feed"
             function.hasAnnotation<OnDeleteMessageFeed>() -> "delete_message_feed"
             function.hasAnnotation<OnHideMessageFeed>() -> "hide_message_feed"
             function.hasAnnotation<OnPromoteManagerFeed>() -> "promote_manager_feed"
             function.hasAnnotation<OnDemoteManagerFeed>() -> "demote_manager_feed"
             function.hasAnnotation<OnHandOverHostFeed>() -> "hand_over_host_feed"
-            function.hasAnnotation<OnOpenChatJoinUserFeed>() -> "open_chat_join_user_feed"
-            function.hasAnnotation<OnOpenChatKickedUserFeed>() -> "open_chat_kicked_user_feed"
+            function.hasAnnotation<OnOpenChatJoinFeed>() -> "open_chat_join_feed"
+            function.hasAnnotation<OnOpenChatKickedFeed>() -> "open_chat_kicked_feed"
+            // 하위 호환용 (Deprecated)
+            function.hasAnnotation<OnInviteUserFeed>() -> "join_feed"
+            function.hasAnnotation<OnLeaveUserFeed>() -> "leave_feed"
+            function.hasAnnotation<OnOpenChatJoinUserFeed>() -> "open_chat_join_feed"
+            function.hasAnnotation<OnOpenChatKickedUserFeed>() -> "open_chat_kicked_feed"
             else -> null
         }
         
@@ -206,20 +224,20 @@ class ControllerManager(private val bot: Any) {
     }
 
     /**
-     * 부?�스?�랩 ?�행
+     * 부?�스?�랩 ?�행
      */
     suspend fun runBootstrap() {
         for (handler in bootstrapHandlers) {
             try {
                 handler.invoke()
             } catch (e: Exception) {
-                logger.error("부?�스?�랩 ?�행 �??�류 발생", e)
+                logger.error("부?�스?�랩 ?�행 �??�류 발생", e)
             }
         }
     }
 
     /**
-     * ?��?�??�행
+     * ?��?�??�행
      */
     fun startSchedulers() {
         for (handler in scheduleHandlers) {
@@ -230,7 +248,7 @@ class ControllerManager(private val bot: Any) {
                         try {
                             handler.invoke()
                         } catch (e: Exception) {
-                            logger.error("?��?�??�업 ?�행 �??�류 발생", e)
+                            logger.error("?��?�??�업 ?�행 �??�류 발생", e)
                         }
                     }
                 }
@@ -244,19 +262,19 @@ class ControllerManager(private val bot: Any) {
     suspend fun handleMessage(context: ChatContext) {
         val command = context.message.command
         
-        // 명령???�들???�행
+        // 명령???�들???�행
         messageHandlers[command]?.forEach { handler ->
             try {
                 if (checkConditions(handler, context)) {
                     handler.invoke(context)
                 }
             } catch (e: Exception) {
-                logger.error("메시지 ?�들???�행 �??�류 발생", e)
+                logger.error("메시지 ?�들???�행 �??�류 발생", e)
                 handleError(ErrorContext("message", handler.function, e, listOf(context)))
             }
         }
         
-        // ?�벤???�들???�행
+        // ?�벤???�들???�행
         val messageType = getMessageType(context)
         eventHandlers[messageType]?.forEach { handler ->
             try {
@@ -264,26 +282,43 @@ class ControllerManager(private val bot: Any) {
                     handler.invoke(context)
                 }
             } catch (e: Exception) {
-                logger.error("?�벤???�들???�행 �??�류 발생", e)
+                logger.error("?�벤???�들???�행 �??�류 발생", e)
                 handleError(ErrorContext("event", handler.function, e, listOf(context)))
             }
         }
     }
 
     /**
-     * 메시지 ?�???�인
+     * 메시지 타입 확인
      */
     private fun getMessageType(context: ChatContext): String {
-        return when (context.message.type) {
-            1 -> "normal_message"
+        val type = context.message.type
+        val hasAttachment = context.message.attachment?.path?.isNotEmpty() == true
+        
+        return when (type) {
+            1 -> if (hasAttachment) "link_message" else "text_message"
             2 -> "photo_message"
-            // 추�??�인 메시지 ?�??매핑
+            3 -> "video_message"
+            4 -> "contact_message"
+            5 -> "audio_message"
+            6 -> "emoticon_message"
+            12, 20 -> "emoticon_thumbnail_message"
+            14 -> "vote_message"
+            17 -> "profile_message"
+            18 -> "file_message"
+            23 -> "search_message"
+            24 -> "notice_message"
+            26 -> "reply_message"
+            27 -> "multi_photo_message"
+            51 -> "voice_talk_message"
+            97 -> "vote_register_message"
+            98 -> "share_message"
             else -> "message"
         }
     }
 
     /**
-     * 조건 ?�인
+     * 조건 ?�인
      */
     private fun checkConditions(handler: Any, context: ChatContext): Boolean {
         val function = when (handler) {
@@ -292,42 +327,42 @@ class ControllerManager(private val bot: Any) {
             else -> return true
         }
         
-        // HasParam 조건 ?�인
+        // HasParam 조건 ?�인
         if (function.hasAnnotation<HasParam>() && context.message.param.isBlank()) {
             return false
         }
         
-        // IsReply 조건 ?�인
+        // IsReply 조건 ?�인
         if (function.hasAnnotation<IsReply>() && context.message.metadata?.get("reply_id") == null) {
-            context.reply("메세지???�장?�여 ?�청?�세??")
+            context.reply("메세지???�장?�여 ?�청?�세??")
             return false
         }
         
-        // IsAdmin 조건 ?�인
+        // IsAdmin 조건 ?�인
         if (function.hasAnnotation<IsAdmin>() && context.sender.type != "HOST" && context.sender.type != "MANAGER") {
-            context.reply("관리자�??�용?????�는 기능?�니??")
+            context.reply("관리자�??�용?????�는 기능?�니??")
             return false
         }
         
-        // IsNotBanned 조건 ?�인
-        if (function.hasAnnotation<IsNotBanned>() && bot is iriskt.bot.Bot) {
+        // IsNotBanned 조건 확인
+        if (function.hasAnnotation<IsNotBanned>() && bot is com.spear.iriskt.Bot) {
             if (bot.isBannedUser(context.sender.id)) {
                 return false
             }
         }
         
-        // HasRole 조건 ?�인
+        // HasRole 조건 ?�인
         function.findAnnotation<HasRole>()?.let { annotation ->
             if (!annotation.roles.contains(context.sender.type)) {
-                context.reply("권한???�습?�다.")
+                context.reply("권한???�습?�다.")
                 return false
             }
         }
         
-        // AllowedRoom 조건 ?�인
+        // AllowedRoom 조건 ?�인
         function.findAnnotation<AllowedRoom>()?.let { annotation ->
             if (!annotation.rooms.contains(context.room.name)) {
-                context.reply("??방에?�는 ?�용?????�는 기능?�니??")
+                context.reply("??방에?�는 ?�용?????�는 기능?�니??")
                 return false
             }
         }
@@ -336,20 +371,20 @@ class ControllerManager(private val bot: Any) {
     }
 
     /**
-     * ?�러 처리
+     * ?�러 처리
      */
     private suspend fun handleError(errorContext: ErrorContext) {
         eventHandlers["error"]?.forEach { handler ->
             try {
                 handler.invoke(errorContext)
             } catch (e: Exception) {
-                logger.error("?�러 ?�들???�행 �??�류 발생", e)
+                logger.error("?�러 ?�들???�행 �??�류 발생", e)
             }
         }
     }
 
     /**
-     * 명령???�들???�래??     */
+     * 명령???�들???�래??     */
     data class CommandHandler(
         val controller: Any,
         val function: KFunction<*>,
@@ -362,7 +397,7 @@ class ControllerManager(private val bot: Any) {
     }
 
     /**
-     * ?�벤???�들???�래??     */
+     * ?�벤???�들???�래??     */
     data class EventHandler(
         val controller: Any,
         val function: KFunction<*>,
@@ -374,7 +409,7 @@ class ControllerManager(private val bot: Any) {
     }
 
     /**
-     * 부?�스?�랩 ?�들???�래??     */
+     * 부?�스?�랩 ?�들???�래??     */
     data class BootstrapHandler(
         val controller: Any,
         val function: KFunction<*>,
@@ -386,7 +421,7 @@ class ControllerManager(private val bot: Any) {
     }
 
     /**
-     * ?��?�??�들???�래??     */
+     * ?��?�??�들???�래??     */
     data class ScheduleHandler(
         val controller: Any,
         val function: KFunction<*>,

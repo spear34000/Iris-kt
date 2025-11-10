@@ -18,10 +18,13 @@ fun main() = runBlocking {
     )
 
     // 이벤트 핸들러 등록
-    // chat : 모든 메시지
-    // message : 일반 메시지
-    // new_member : 새 멤버 참여
-    // del_member : 멤버 퇴장
+    // message : 모든 메시지
+    // text_message : 일반 텍스트 메시지 (type = 1, 첨부파일 없음)
+    // link_message : 링크 메시지 (type = 1, 첨부파일 있음)
+    // photo_message : 사진 메시지 (type = 2)
+    // video_message : 동영상 메시지 (type = 3)
+    // join_feed : 멤버 입장 피드 (type = 4)
+    // leave_feed : 멤버 퇴장 피드 (type = 2)
     // unknown : 알 수 없는 이벤트
     // error : 오류 발생
     bot.onEvent("message") { payload ->
@@ -33,6 +36,34 @@ fun main() = runBlocking {
             }
         }
     }
+    
+    // 사진 메시지 처리
+    bot.onEvent("photo_message") { payload ->
+        if (payload is ChatContext) {
+            payload.reply("사진을 받았습니다! 📷")
+        }
+    }
+    
+    // 멤버 입장 처리
+    bot.onEvent("join_feed") { payload ->
+        if (payload is ChatContext) {
+            payload.reply("${payload.sender.name}님 환영합니다! 🎉")
+        }
+    }
 
     bot.run()
 }
+
+    
+    // 메시지 타입별 처리 (타입 체크 메서드 사용)
+    bot.onEvent("message") { payload ->
+        if (payload is ChatContext) {
+            when {
+                payload.message.isPhoto -> payload.reply("사진을 받았습니다! 📷")
+                payload.message.isVideo -> payload.reply("동영상을 받았습니다! 🎥")
+                payload.message.isLink -> payload.reply("링크를 받았습니다! 🔗")
+                payload.message.isReply -> payload.reply("답장 메시지입니다!")
+                payload.message.isEmoticon -> payload.reply("이모티콘! 😊")
+            }
+        }
+    }

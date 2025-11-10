@@ -1,12 +1,14 @@
 package com.spear.iriskt.models
 
+import com.spear.iriskt.api.IrisApiClient
+
 /**
  * 채팅 메시지의 이미지를 표현합니다
  */
 data class ChatImage(
     val url: List<String> = emptyList(),
     var img: List<ByteArray> = emptyList(),
-    private val api: iriskt.bot.api.IrisApiClient? = null
+    private val api: IrisApiClient? = null
 ) {
     /**
      * 이미지 URL 목록 조회

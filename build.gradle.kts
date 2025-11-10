@@ -1,51 +1,19 @@
 plugins {
+    kotlin("jvm") version "1.9.24"
     kotlin("plugin.serialization") version "1.9.24"
-    id("com.android.application") version "8.1.1"
-    id("org.jetbrains.kotlin.android") version "1.9.24"
+    `maven-publish`
 }
 
-android {
-    namespace = "com.spear.iriskt"
-    compileSdk = 34
-
-    repositories {
-        google()
-        mavenCentral()
-    }
-
-    defaultConfig {
-        applicationId = "com.spear.iriskt"
-        minSdk = 24
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+repositories {
+    mavenCentral()
 }
 
 dependencies {
+    // Kotlin
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.24")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-common:1.9.24")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.24")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host:1.9.24")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.9.24")
+    
     // Ktor Client
     implementation("io.ktor:ktor-client-core:2.3.9")
     implementation("io.ktor:ktor-client-cio:2.3.9")
@@ -61,18 +29,63 @@ dependencies {
     // Logging
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("org.slf4j:slf4j-simple:2.0.13")
-
-    // Android dependencies
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.10.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
-    implementation("androidx.preference:preference-ktx:1.2.1")
+    
+    // Testing
+    testImplementation(kotlin("test"))
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
 
 kotlin {
     jvmToolchain(17)
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    withSourcesJar()
+    withJavadocJar()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "com.spear.iriskt"
+            artifactId = "iris-kt"
+            version = "0.1.0"
+            
+            from(components["java"])
+            
+            pom {
+                name.set("Iris-kt")
+                description.set("Kotlin implementation of irispy-client for KakaoTalk bot development")
+                url.set("https://github.com/yourusername/iris-kt")
+                
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
+                    }
+                }
+                
+                developers {
+                    developer {
+                        id.set("spear")
+                        name.set("Spear")
+                    }
+                }
+                
+                scm {
+                    connection.set("scm:git:git://github.com/yourusername/iris-kt.git")
+                    developerConnection.set("scm:git:ssh://github.com/yourusername/iris-kt.git")
+                    url.set("https://github.com/yourusername/iris-kt")
+                }
+            }
+        }
+    }
 }
 
 group = "com.spear.iriskt"

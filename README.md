@@ -381,14 +381,34 @@ Bot(
 
 **속성**
 - `id: Long`: 메시지 ID
-- `type: Int`: 메시지 타입
+- `type: Int`: 메시지 타입 (1~98)
 - `text: String`: 메시지 내용
 - `attachment: String?`: 첨부 파일
-- `metadata: JsonElement?`: 추가 데이터
+- `metadata: Map<String, Any>?`: 추가 데이터
 - `command: String`: 명령어 (첫 단어)
 - `param: String`: 매개변수 (나머지 부분)
 - `hasParam: Boolean`: 매개변수 존재 여부
 - `image: ChatImage?`: 이미지 정보
+
+**타입 체크 메서드**
+- `isText: Boolean`: 일반 텍스트 메시지 (type = 1, 첨부파일 없음)
+- `isLink: Boolean`: 링크 메시지 (type = 1, 첨부파일 있음)
+- `isPhoto: Boolean`: 사진 메시지 (type = 2)
+- `isVideo: Boolean`: 동영상 메시지 (type = 3)
+- `isContact: Boolean`: 연락처 메시지 (type = 4)
+- `isAudio: Boolean`: 음성 메시지 (type = 5)
+- `isEmoticon: Boolean`: 이모티콘 메시지 (type = 6)
+- `isEmoticonThumbnail: Boolean`: 이모티콘 썸네일 (type = 12, 20)
+- `isVote: Boolean`: 투표 메시지 (type = 14)
+- `isProfile: Boolean`: 프로필 메시지 (type = 17)
+- `isFile: Boolean`: 파일 메시지 (type = 18)
+- `isSearch: Boolean`: 검색 메시지 (type = 23)
+- `isNotice: Boolean`: 공지 메시지 (type = 24)
+- `isReply: Boolean`: 답장 메시지 (type = 26)
+- `isMultiPhoto: Boolean`: 묶음사진 메시지 (type = 27)
+- `isVoiceTalk: Boolean`: 보이스톡 메시지 (type = 51)
+- `isVoteRegister: Boolean`: 투표 등록 메시지 (type = 97)
+- `isShare: Boolean`: 공유 메시지 (type = 98)
 
 ### User 클래스
 
@@ -478,26 +498,49 @@ IrisLink(
 
 **메시지 타입별**
 - `@OnMessage`: 모든 메시지
-- `@OnNormalMessage`: 일반 텍스트 메시지
-- `@OnPhotoMessage`: 사진 메시지
-- `@OnImageMessage`: 이미지 메시지
-- `@OnVideoMessage`: 비디오 메시지
-- `@OnAudioMessage`: 오디오 메시지
-- `@OnFileMessage`: 파일 메시지
-- `@OnMapMessage`: 지도 메시지
-- `@OnEmoticonMessage`: 이모티콘 메시지
-- `@OnProfileMessage`: 프로필 메시지
-- `@OnMultiPhotoMessage`: 다중 사진 메시지
-- `@OnNewMultiPhotoMessage`: 새로운 다중 사진 메시지
-- `@OnReplyMessage`: 답장 메시지
+- `@OnTextMessage`: 일반 텍스트 메시지 (type = 1, 첨부파일 없음)
+- `@OnLinkMessage`: 링크 메시지 (type = 1, 첨부파일 있음)
+- `@OnPhotoMessage`: 사진 메시지 (type = 2)
+- `@OnVideoMessage`: 동영상 메시지 (type = 3)
+- `@OnContactMessage`: 연락처 메시지 (type = 4)
+- `@OnAudioMessage`: 음성 메시지 (type = 5)
+- `@OnEmoticonMessage`: 이모티콘 메시지 (type = 6)
+- `@OnEmoticonThumbnailMessage`: 이모티콘 썸네일 메시지 (type = 12, 20)
+- `@OnVoteMessage`: 투표 메시지 (type = 14)
+- `@OnProfileMessage`: 카카오 프로필 메시지 (type = 17)
+- `@OnFileMessage`: 파일 메시지 (type = 18)
+- `@OnSearchMessage`: 검색 메시지 (type = 23)
+- `@OnNoticeMessage`: 공지 메시지 (type = 24)
+- `@OnReplyMessage`: 답장 메시지 (type = 26)
+- `@OnMultiPhotoMessage`: 묶음사진 메시지 (type = 27)
+- `@OnVoiceTalkMessage`: 보이스톡 메시지 (type = 51)
+- `@OnVoteRegisterMessage`: 투표 등록 메시지 (type = 97)
+- `@OnShareMessage`: 공유 메시지 (type = 98)
+
+**하위 호환용 (Deprecated)**
+- `@OnNormalMessage`: `@OnTextMessage` 사용 권장
+- `@OnImageMessage`: `@OnPhotoMessage` 사용 권장
+- `@OnNewMultiPhotoMessage`: `@OnMultiPhotoMessage` 사용 권장
+- ~~`@OnMapMessage`~~: 더 이상 지원되지 않음
 
 **피드 타입별**
-- `@OnFeedMessage`: 피드 메시지
-- `@OnInviteUserFeed`: 사용자 초대 피드
-- `@OnLeaveUserFeed`: 사용자 퇴장 피드
+- `@OnFeedMessage`: 모든 피드 메시지
+- `@OnJoinFeed`: 멤버 입장 피드 (type = 4) - "닉네임님이 들어왔습니다."
+- `@OnLeaveFeed`: 멤버 퇴장 피드 (type = 2) - "닉네임님이 나갔습니다."
+- `@OnForcedExitFeed`: 멤버 강제 퇴장 피드 (type = 6) - "닉네임님을 내보냈습니다."
 - `@OnDeleteMessageFeed`: 메시지 삭제 피드
 - `@OnHideMessageFeed`: 메시지 숨김 피드
 - `@OnPromoteManagerFeed`: 관리자 승급 피드
+- `@OnDemoteManagerFeed`: 관리자 강등 피드
+- `@OnHandOverHostFeed`: 방장 위임 피드
+- `@OnOpenChatJoinFeed`: 오픈채팅 사용자 입장 피드
+- `@OnOpenChatKickedFeed`: 오픈채팅 사용자 추방 피드
+
+**하위 호환용 (Deprecated)**
+- `@OnInviteUserFeed`: `@OnJoinFeed` 사용 권장
+- `@OnLeaveUserFeed`: `@OnLeaveFeed` 사용 권장
+- `@OnOpenChatJoinUserFeed`: `@OnOpenChatJoinFeed` 사용 권장
+- `@OnOpenChatKickedUserFeed`: `@OnOpenChatKickedFeed` 사용 권장
 - `@OnDemoteManagerFeed`: 관리자 강등 피드
 - `@OnHandOverHostFeed`: 방장 위임 피드
 - `@OnOpenChatJoinUserFeed`: 오픈채팅 사용자 입장 피드
