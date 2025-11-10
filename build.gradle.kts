@@ -62,7 +62,7 @@ publishing {
             pom {
                 name.set("Iris-kt")
                 description.set("Kotlin implementation of irispy-client for KakaoTalk bot development")
-                url.set("https://github.com/yourusername/iris-kt")
+                url.set("https://github.com/spear34000/Iris-kt")
                 
                 licenses {
                     license {
@@ -73,15 +73,15 @@ publishing {
                 
                 developers {
                     developer {
-                        id.set("spear")
+                        id.set("spear34000")
                         name.set("Spear")
                     }
                 }
                 
                 scm {
-                    connection.set("scm:git:git://github.com/yourusername/iris-kt.git")
-                    developerConnection.set("scm:git:ssh://github.com/yourusername/iris-kt.git")
-                    url.set("https://github.com/yourusername/iris-kt")
+                    connection.set("scm:git:git://github.com/spear34000/Iris-kt.git")
+                    developerConnection.set("scm:git:ssh://github.com/spear34000/Iris-kt.git")
+                    url.set("https://github.com/spear34000/Iris-kt")
                 }
             }
         }
