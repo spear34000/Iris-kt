@@ -9,13 +9,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.*
 import java.util.Base64
 
 class IrisHttpException(val status: Int, message: String) : RuntimeException(message)
@@ -239,7 +233,7 @@ class IrisApiClient(
                 type = messageData["type"]?.jsonPrimitive?.intOrNull ?: 0,
                 text = messageData["text"]?.jsonPrimitive?.contentOrNull ?: "",
                 attachment = messageData["attachment"]?.jsonPrimitive?.contentOrNull,
-                metadata = parseMetadata(messageData["metadata"])
+                metadata = messageData["metadata"]
             )
             
             val room = com.spear.iriskt.models.Room(

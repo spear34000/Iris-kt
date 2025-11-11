@@ -50,9 +50,9 @@ class EventEmitter(maxConcurrency: Int? = null, dispatcher: CoroutineDispatcher 
                     handler(payload) 
                 }.onFailure { error ->
                     if (key == "error") {
-                        logger.error(error) { "error 핸들러에서 예외가 발생했습니다" }
+                        logger.error("error 핸들러에서 예외가 발생했습니다", error)
                     } else {
-                        val context = ErrorContext(event = key, handler = handler, exception = error, payload = payload)
+                        val context = ErrorContext(event = key, exception = error as Exception, payload = payload)
                         emit("error", context)
                     }
                 }

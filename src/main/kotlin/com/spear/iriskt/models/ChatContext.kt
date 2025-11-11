@@ -28,11 +28,11 @@ data class ChatContext(
     }
 
     /**
-     * ?�장?�는 메시지??ChatContext�?반환?�니??
+     * 답장하는 메시지의 ChatContext를 반환합니다
      */
     suspend fun getSource(): ChatContext? {
-        val replyId = message.metadata?.get("reply_id") as? Long ?: return null
-        return api?.getMessage(replyId, room.id)
+        // TODO: metadata에서 reply_id 추출 구현 필요
+        return null
     }
 
     /**

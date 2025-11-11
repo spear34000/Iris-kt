@@ -1,7 +1,8 @@
 package com.spear.iriskt.annotations
 
 /**
- * �?명령?��? ?�록?�는 ?�노?�이?? */
+ * 봇 명령어를 등록하는 어노테이션
+ */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class BotCommand(
@@ -10,21 +11,24 @@ annotation class BotCommand(
 )
 
 /**
- * 컨트롤러???�벤?��? ?�신??경우 ?�동?�로 ?�행?�는 명령?�로 ?�록?�는 ?�노?�이?? */
+ * 컨트롤러가 이벤트를 수신할 경우 자동으로 실행되는 명령어로 등록하는 어노테이션
+ */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Command
 
 /**
- * ?��?�?명령?��? ?�록?�는 ?�노?�이?? */
+ * 도움말 명령어를 등록하는 어노테이션
+ */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class HelpCommand(
-    val command: String = "?��?�?
+    val command: String = "help"
 )
 
 /**
- * 컨트롤러??기본 prefix�??�정?�는 ?�노?�이?? */
+ * 컨트롤러의 기본 prefix를 설정하는 어노테이션
+ */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Prefix(
@@ -32,7 +36,8 @@ annotation class Prefix(
 )
 
 /**
- * ?�정 메소?�에�?prefix�??�정?�는 ?�노?�이?? */
+ * 특정 메소드에만 prefix를 설정하는 어노테이션
+ */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class MethodPrefix(

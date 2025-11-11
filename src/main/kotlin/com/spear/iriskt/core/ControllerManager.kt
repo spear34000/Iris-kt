@@ -123,7 +123,7 @@ class ControllerManager(private val bot: Any) {
                     controller = controller,
                     function = function,
                     command = commandName,
-                    description = "?��?�?
+                    description = "도움말"
                 )
                 
                 messageHandlers.getOrPut(commandName) { mutableListOf() }.add(handler)
@@ -269,8 +269,8 @@ class ControllerManager(private val bot: Any) {
                     handler.invoke(context)
                 }
             } catch (e: Exception) {
-                logger.error("메시지 ?�들???�행 �??�류 발생", e)
-                handleError(ErrorContext("message", handler.function, e, listOf(context)))
+                logger.error("메시지 핸들러 실행 중 에러 발생", e)
+                handleError(ErrorContext("message", e, context))
             }
         }
         
@@ -282,8 +282,8 @@ class ControllerManager(private val bot: Any) {
                     handler.invoke(context)
                 }
             } catch (e: Exception) {
-                logger.error("?�벤???�들???�행 �??�류 발생", e)
-                handleError(ErrorContext("event", handler.function, e, listOf(context)))
+                logger.error("이벤트 핸들러 실행 중 에러 발생", e)
+                handleError(ErrorContext("event", e, context))
             }
         }
     }
@@ -293,7 +293,7 @@ class ControllerManager(private val bot: Any) {
      */
     private fun getMessageType(context: ChatContext): String {
         val type = context.message.type
-        val hasAttachment = context.message.attachment?.path?.isNotEmpty() == true
+        val hasAttachment = context.message.attachment?.isNotEmpty() == true
         
         return when (type) {
             1 -> if (hasAttachment) "link_message" else "text_message"
@@ -318,9 +318,9 @@ class ControllerManager(private val bot: Any) {
     }
 
     /**
-     * 조건 ?�인
+     * 조건 확인
      */
-    private fun checkConditions(handler: Any, context: ChatContext): Boolean {
+    private suspend fun checkConditions(handler: Any, context: ChatContext): Boolean {
         val function = when (handler) {
             is CommandHandler -> handler.function
             is EventHandler -> handler.function
@@ -332,9 +332,9 @@ class ControllerManager(private val bot: Any) {
             return false
         }
         
-        // IsReply 조건 ?�인
-        if (function.hasAnnotation<IsReply>() && context.message.metadata?.get("reply_id") == null) {
-            context.reply("메세지???�장?�여 ?�청?�세??")
+        // IsReply 조건 확인
+        if (function.hasAnnotation<IsReply>() && !context.message.isReply) {
+            context.reply("답장 메시지에서만 사용할 수 있습니다")
             return false
         }
         
@@ -359,10 +359,10 @@ class ControllerManager(private val bot: Any) {
             }
         }
         
-        // AllowedRoom 조건 ?�인
+        // AllowedRoom 조건 확인
         function.findAnnotation<AllowedRoom>()?.let { annotation ->
-            if (!annotation.rooms.contains(context.room.name)) {
-                context.reply("??방에?�는 ?�용?????�는 기능?�니??")
+            if (!annotation.roomNames.contains(context.room.name)) {
+                context.reply("이 방에서는 사용할 수 없는 기능입니다")
                 return false
             }
         }

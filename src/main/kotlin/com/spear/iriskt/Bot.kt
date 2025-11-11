@@ -18,8 +18,7 @@ import com.spear.iriskt.models.ErrorContext
 import com.spear.iriskt.models.Message
 import com.spear.iriskt.models.Room
 import com.spear.iriskt.models.User
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -340,7 +339,7 @@ class Bot(
         
         // 채팅 로그 저장
         if (options.saveChatLogs) {
-            kotlinx.coroutines.GlobalScope.launch {
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
                 chatLogger.log(context)
             }
         }
@@ -389,16 +388,6 @@ class Bot(
         }
         install(ContentNegotiation) {
             json(jsonParser)
-        }
-        engine {
-            maxConnectionsCount = 100
-            endpoint {
-                maxConnectionsPerRoute = 10
-                pipelineMaxSize = 20
-                keepAliveTime = 5000
-                connectTimeout = 5000
-                connectAttempts = 3
-            }
         }
     }
 

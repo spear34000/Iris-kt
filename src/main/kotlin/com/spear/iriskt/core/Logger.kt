@@ -11,7 +11,7 @@ enum class LogLevel(val value: Int) {
 }
 
 class Logger(
-    private val name: String = "Bot",
+    val name: String = "Bot",
     private val level: LogLevel = LogLevel.INFO
 ) {
 

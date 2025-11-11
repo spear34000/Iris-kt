@@ -39,10 +39,10 @@ object Decorators {
      */
     fun isReply(handler: suspend (ChatContext) -> Unit): suspend (ChatContext) -> Unit {
         return { context ->
-            if (context.message.metadata?.get("reply_id") != null) {
+            if (context.message.isReply) {
                 handler(context)
             } else {
-                context.reply("메시지를 답장하여 사용해주세요.")
+                context.reply("답장 메시지에서만 사용할 수 있습니다.")
             }
         }
     }

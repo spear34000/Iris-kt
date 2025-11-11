@@ -1,15 +1,17 @@
 package com.spear.iriskt.annotations
 
 /**
- * 주기???��?�??�행???�한 ?�노?�이?? */
+ * 주기적으로 실행을 위한 어노테이션
+ */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Schedule(
-    val interval: Long = 0 // 밀리초 ?�위
+    val interval: Long = 0 // 밀리초 단위
 )
 
 /**
- * ?��?줄된 메시지 처리�??�한 ?�노?�이?? */
+ * 스케줄된 메시지 처리를 위한 어노테이션
+ */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class ScheduleMessage(
@@ -17,9 +19,10 @@ annotation class ScheduleMessage(
 )
 
 /**
- * �??�작??부?�스?�랩 ?�행???�한 ?�노?�이?? */
+ * 봇 시작 시 부트스트랩 실행을 위한 어노테이션
+ */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Bootstrap(
-    val priority: Int = 0 // ??? ?�자 ?�선
+    val priority: Int = 0 // 낮은 숫자 우선
 )

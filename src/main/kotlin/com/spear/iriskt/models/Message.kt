@@ -1,13 +1,14 @@
 package com.spear.iriskt.models
 
 import com.spear.iriskt.api.IrisApiClient
+import kotlinx.serialization.json.JsonElement
 
 data class Message(
     val id: Long = -1,
     val type: Int = 0,
     val text: String = "",
     val attachment: String? = null,
-    val metadata: Map<String, Any>? = null,
+    val metadata: JsonElement? = null,
     private val api: IrisApiClient? = null
 ) {
     /**
@@ -37,22 +38,14 @@ data class Message(
     val image: ChatImage?
         get() {
             // 메타데이터에서 이미지 URL 추출
-            val imageUrls = when {
-                metadata?.containsKey("image_urls") == true -> {
-                    @Suppress("UNCHECKED_CAST")
-                    (metadata["image_urls"] as? List<String>) ?: emptyList()
-                }
-                metadata?.containsKey("image_url") == true -> {
-                    listOf(metadata["image_url"] as? String ?: "")
-                }
-                attachment?.startsWith("http") == true -> {
-                    listOf(attachment)
-                }
-                else -> emptyList()
+            val imageUrls = if (attachment?.startsWith("http") == true) {
+                listOf(attachment)
+            } else {
+                emptyList()
             }
             
             return if (imageUrls.isNotEmpty()) {
-                ChatImage(imageUrls, api)
+                ChatImage(url = imageUrls, api = api)
             } else {
                 null
             }
@@ -62,7 +55,7 @@ data class Message(
      * 답장 메시지 여부 (type = 26)
      */
     val isReply: Boolean
-        get() = type == 26 || metadata?.containsKey("reply_id") == true
+        get() = type == 26
     
     /**
      * 텍스트 메시지 여부 (type = 1, 첨부파일 없음)

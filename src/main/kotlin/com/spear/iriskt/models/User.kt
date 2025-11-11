@@ -1,5 +1,7 @@
 package com.spear.iriskt.models
 
+import com.spear.iriskt.api.IrisApiClient
+
 /**
  * 사용자를 표현합니다
  */
@@ -8,7 +10,7 @@ data class User(
     val name: String,
     val type: String = "NORMAL",
     val avatar: Avatar? = null,
-    private val api: iriskt.bot.api.IrisApiClient? = null,
+    private val api: IrisApiClient? = null,
     private val roomId: Long? = null
 ) {
     /**
@@ -69,7 +71,7 @@ data class Avatar(
     val id: String = "",
     val url: String = "",
     var img: ByteArray? = null,
-    private val api: iriskt.bot.api.IrisApiClient? = null
+    private val api: IrisApiClient? = null
 ) {
     /**
      * 아바타 URL 조회

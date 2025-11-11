@@ -1,13 +1,10 @@
 package com.spear.iriskt.models
 
-import kotlin.reflect.KFunction
-
 /**
- * ?�류 ?�벤?�의 컨텍?�트�??��??�니??
+ * 에러 이벤트의 컨텍스트를 표현합니다
  */
 data class ErrorContext(
     val event: String,
-    val func: KFunction<*>,
     val exception: Exception,
-    val args: List<Any>
+    val payload: Any? = null
 )

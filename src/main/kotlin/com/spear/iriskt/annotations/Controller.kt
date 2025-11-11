@@ -1,14 +1,14 @@
 package com.spear.iriskt.annotations
 
 /**
- * 컨트롤러 ?�래?��? ?�시?�는 ?�노?�이??
+ * 컨트롤러 클래스를 표시하는 어노테이션
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Controller
 
 /**
- * 메시지 컨트롤러 ?�래?��? ?�시?�는 ?�노?�이??
+ * 메시지 컨트롤러 클래스를 표시하는 어노테이션
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
@@ -52,42 +52,42 @@ annotation class NewMemberController
 annotation class DeleteMemberController
 
 /**
- * ?�드 ?�벤??컨트롤러 ?�래?��? ?�시?�는 ?�노?�이??
+ * 피드 이벤트 컨트롤러 클래스를 표시하는 어노테이션
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class FeedController
 
 /**
- * ?????�는 ?�벤??컨트롤러 ?�래?��? ?�시?�는 ?�노?�이??
+ * 알 수 없는 이벤트 컨트롤러 클래스를 표시하는 어노테이션
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class UnknownController
 
 /**
- * ?�러 ?�벤??컨트롤러 ?�래?��? ?�시?�는 ?�노?�이??
+ * 에러 이벤트 컨트롤러 클래스를 표시하는 어노테이션
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class ErrorController
 
 /**
- * 배치 처리 컨트롤러 ?�래?��? ?�시?�는 ?�노?�이??
+ * 배치 처리 컨트롤러 클래스를 표시하는 어노테이션
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class BatchController
 
 /**
- * 부?�스?�랩 컨트롤러 ?�래?��? ?�시?�는 ?�노?�이??
+ * 부트스트랩 컨트롤러 클래스를 표시하는 어노테이션
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class BootstrapController
 
 /**
- * 채팅 ?�벤??컨트롤러 ?�래?��? ?�시?�는 ?�노?�이??
+ * 채팅 이벤트 컨트롤러 클래스를 표시하는 어노테이션
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)

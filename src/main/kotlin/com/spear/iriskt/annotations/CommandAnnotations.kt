@@ -1,59 +1,52 @@
 package com.spear.iriskt.annotations
 
 /**
- * 메시지 컨트롤러 ?�래?��? ?�시?�는 ?�노?�이??
- */
-@Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class MessageController
-
-/**
- * ?�정 방에?�만 명령?��? ?�용?�는 ?�노?�이??
+ * 특정 방에서만 명령어를 사용하는 어노테이션
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class AllowedRoom(vararg val roomNames: String)
 
 /**
- * 매개변?��? ?�요??명령???�시 ?�노?�이??
+ * 매개변수가 필요한 명령어 표시 어노테이션
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class HasParam
 
 /**
- * 관리자�??�용?????�는 명령???�시 ?�노?�이??
+ * 관리자만 사용할 수 있는 명령어 표시 어노테이션
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class IsAdmin
 
 /**
- * ?�정 ??��???�요??명령???�시 ?�노?�이??
+ * 특정 역할이 필요한 명령어 표시 어노테이션
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class HasRole(vararg val roles: String)
 
 /**
- * 명령???�행 ?�한???�정?�는 ?�노?�이??
+ * 명령어 실행 빈도를 제한하는 어노테이션
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Throttle(
     val maxCalls: Int = 5,
-    val timeWindowMs: Long = 60000L // 1�?
+    val timeWindowMs: Long = 60000L // 1분
 )
 
 /**
- * 차단?��? ?��? ?�용?�만 ?�용?????�는 명령???�시 ?�노?�이??
+ * 차단되지 않은 사용자만 사용할 수 있는 명령어 표시 어노테이션
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class IsNotBanned
 
 /**
- * ?�장 메시지?�서�??�용?????�는 명령???�시 ?�노?�이??
+ * 답장 메시지에서만 사용할 수 있는 명령어 표시 어노테이션
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

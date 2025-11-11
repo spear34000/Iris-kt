@@ -1,5 +1,7 @@
 package com.spear.iriskt.models
 
+import com.spear.iriskt.api.IrisApiClient
+
 /**
  * 채팅방을 표현합니다
  */
@@ -7,7 +9,7 @@ data class Room(
     val id: Long,
     val name: String,
     val type: String = "",
-    private val api: iriskt.bot.api.IrisApiClient? = null
+    private val api: IrisApiClient? = null
 ) {
     /**
      * 방 타입 조회
